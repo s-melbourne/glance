@@ -1,0 +1,225 @@
+// ─── Glance API — Calendar Proxy ─────────────────────────────────────────────
+// Azure Functions v4 programming model.
+// Route: GET /api/calendar
+//
+// Fetches the private iCloud .ics stream from the URL stored in the
+// ICLOUD_CALENDAR_URL app setting, parses it server-side with ical.js,
+// and returns a clean structured JSON payload to the frontend.
+// The private URL is never exposed to the browser.
+
+'use strict';
+
+const { app } = require('@azure/functions');
+const ICAL = require('ical.js');
+
+// ─── Allowed user IDs — must match USERS array in src/state.js ───────────────
+const VALID_USERS = new Set(['anna', 'simeon', 'tennille', 'bibi']);
+
+// ─── Helper: map keyword in event summary to a userId ───────────────────────
+const USER_KEYWORDS = [
+  { id: 'anna',     keywords: ['anna'] },
+  { id: 'simeon',   keywords: ['simeon'] },
+  { id: 'tennille', keywords: ['tennille'] },
+  { id: 'bibi',     keywords: ['bibi'] },
+];
+
+function matchUser(summary) {
+  const lower = (summary || '').toLowerCase();
+  for (const u of USER_KEYWORDS) {
+    if (u.keywords.some(kw => lower.includes(kw))) return u.id;
+  }
+  return null;
+}
+
+// ─── Helper: strip matched user keyword prefix from summary ─────────────────
+function stripUserPrefix(summary) {
+  let s = summary;
+  for (const u of USER_KEYWORDS) {
+    for (const kw of u.keywords) {
+      s = s.replace(new RegExp(kw, 'gi'), '').trim();
+    }
+  }
+  return s.replace(/^[-:,\s]+/, '').trim() || summary;
+}
+
+// ─── Helper: convert ICAL.Time to JS Date, handling floating times ───────────
+function icalTimeToDate(icalTime) {
+  return icalTime.toJSDate();
+}
+
+// ─── Parse raw .ics text into structured event objects ───────────────────────
+function parseICalEvents(icsText) {
+  let jcal;
+  try {
+    jcal = ICAL.parse(icsText);
+  } catch {
+    throw new Error('Failed to parse iCalendar data');
+  }
+
+  const comp = new ICAL.Component(jcal);
+  const vevents = comp.getAllSubcomponents('vevent');
+  const events = [];
+
+  for (const vevent of vevents) {
+    const event = new ICAL.Event(vevent);
+    const rawSummary = (event.summary || 'Untitled').trim();
+    const userId = matchUser(rawSummary);
+    const label = stripUserPrefix(rawSummary);
+
+    // Expand recurring events within a 60-day window
+    const windowStart = new Date();
+    windowStart.setHours(0, 0, 0, 0);
+    const windowEnd = new Date(windowStart);
+    windowEnd.setDate(windowEnd.getDate() + 60);
+
+    if (event.isRecurring()) {
+      try {
+        const iter = event.iterator();
+        let next;
+        while ((next = iter.next())) {
+          const start = icalTimeToDate(next);
+          if (start > windowEnd) break;
+          if (start < windowStart) continue;
+
+          const detail = event.getOccurrenceDetails(next);
+          const end = icalTimeToDate(detail.endDate);
+
+          events.push({
+            id: `${event.uid}-${next.toICALString()}`,
+            summary: rawSummary,
+            label,
+            userId,
+            start: start.toISOString(),
+            end: end.toISOString(),
+            allDay: next.isDate,
+          });
+        }
+      } catch {
+        // Skip malformed recurring events without crashing the whole feed
+      }
+    } else {
+      const start = icalTimeToDate(event.startDate);
+      const end = event.endDate
+        ? icalTimeToDate(event.endDate)
+        : new Date(start.getTime() + 3_600_000);
+
+      if (event.startDate.isDate) {
+        // Multi-day all-day event — expand into individual day entries
+        let cursor = new Date(start);
+        cursor.setHours(0, 0, 0, 0);
+        const last = new Date(end);
+        last.setHours(0, 0, 0, 0);
+        let idx = 0;
+        while (cursor < last) {
+          const next = new Date(cursor);
+          next.setDate(next.getDate() + 1);
+          events.push({
+            id: `${event.uid}-allday-${idx++}`,
+            summary: rawSummary,
+            label,
+            userId,
+            start: cursor.toISOString(),
+            end: next.toISOString(),
+            allDay: true,
+          });
+          cursor = next;
+        }
+      } else {
+        events.push({
+          id: event.uid || `event-${Date.now()}`,
+          summary: rawSummary,
+          label,
+          userId,
+          start: start.toISOString(),
+          end: end.toISOString(),
+          allDay: false,
+        });
+      }
+    }
+  }
+
+  return events;
+}
+
+// ─── Function registration (v4 model — no function.json) ─────────────────────
+app.http('calendar', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'calendar',
+  handler: async (request, context) => {
+    const calendarUrl = process.env.ICLOUD_CALENDAR_URL;
+
+    if (!calendarUrl) {
+      context.error('ICLOUD_CALENDAR_URL environment variable is not set.');
+      return {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Calendar source not configured.' }),
+      };
+    }
+
+    // Validate the URL is HTTPS before fetching
+    let parsed;
+    try {
+      parsed = new URL(calendarUrl);
+    } catch {
+      context.error('ICLOUD_CALENDAR_URL is not a valid URL.');
+      return {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Calendar source misconfigured.' }),
+      };
+    }
+
+    if (parsed.protocol !== 'https:') {
+      context.error('ICLOUD_CALENDAR_URL must use HTTPS.');
+      return {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Calendar source must use HTTPS.' }),
+      };
+    }
+
+    let icsText;
+    try {
+      const response = await fetch(calendarUrl, {
+        headers: { 'User-Agent': 'Glance-Family-Dashboard/1.0' },
+        signal: AbortSignal.timeout(10_000),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upstream responded with HTTP ${response.status}`);
+      }
+
+      icsText = await response.text();
+    } catch (err) {
+      context.error('Failed to fetch calendar feed:', err.message);
+      return {
+        status: 502,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Failed to retrieve calendar data.' }),
+      };
+    }
+
+    let events;
+    try {
+      events = parseICalEvents(icsText);
+    } catch (err) {
+      context.error('Failed to parse calendar feed:', err.message);
+      return {
+        status: 422,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Calendar data could not be parsed.' }),
+      };
+    }
+
+    return {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=300', // 5-minute CDN cache
+      },
+      body: JSON.stringify({ events, fetchedAt: new Date().toISOString() }),
+    };
+  },
+});

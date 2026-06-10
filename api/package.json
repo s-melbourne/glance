@@ -1,0 +1,22 @@
+{
+  "name": "glance-api",
+  "version": "1.0.0",
+  "description": "Glance serverless API — Azure Functions Node.js v4 programming model",
+  "type": "commonjs",
+  "main": "functions/*.js",
+  "scripts": {
+    "start": "func start",
+    "build": "echo No build step required for vanilla JS v4 model"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0",
+    "@azure/cosmos": "^4.1.0",
+    "ical.js": "^1.5.0"
+  },
+  "devDependencies": {
+    "azure-functions-core-tools": "^4.0.0"
+  }
+}

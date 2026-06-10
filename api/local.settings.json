@@ -1,0 +1,14 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "ICLOUD_CALENDAR_URL": "YOUR_HTTPS_ICLOUD_LINK_HERE",
+    "COSMOS_CONNECTION_STRING": "AccountEndpoint=https://YOUR-COSMOS-ACCOUNT.documents.azure.com:443/;AccountKey=YOUR_KEY_HERE;"
+  },
+  "Host": {
+    "LocalHttpPort": 7071,
+    "CORS": "*",
+    "CORSCredentials": false
+  }
+}

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Glance">
@@ -17,7 +17,8 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            sans: ['Manrope', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            display: ['Playfair Display', 'Georgia', 'serif'],
           },
         },
       },
@@ -25,13 +26,27 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --glance-bg-1: #f4f5f7;
+      --glance-bg-2: #edf2f8;
+      --glance-surface: rgba(255, 255, 255, 0.9);
+      --glance-border: rgba(24, 24, 27, 0.1);
+      --glance-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
     html, body {
       height: 100%;
       overscroll-behavior: none;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+    }
+    body {
+      background:
+        radial-gradient(1200px 600px at 0% 0%, #e0ecff 0%, transparent 60%),
+        radial-gradient(900px 500px at 100% 100%, #ffe6d8 0%, transparent 55%),
+        linear-gradient(180deg, var(--glance-bg-1) 0%, var(--glance-bg-2) 100%);
+      background-attachment: fixed;
     }
     .safe-top { padding-top: env(safe-area-inset-top, 0px); }
     .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -50,6 +65,33 @@
     }
     .scrollbar-thin::-webkit-scrollbar { width: 4px; }
     .scrollbar-thin::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
+    .glass-panel {
+      background: var(--glance-surface);
+      border: 1px solid var(--glance-border);
+      box-shadow: var(--glance-shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .elevate-hover {
+      transition: transform 220ms ease, box-shadow 220ms ease;
+    }
+    .elevate-hover:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(24, 24, 27, 0.1);
+    }
+    @keyframes rise-in {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .stagger-item {
+      animation: rise-in 380ms ease both;
+    }
     @keyframes pulse-dot {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.4; }
@@ -57,7 +99,7 @@
     .sync-pulse { animation: pulse-dot 2s ease-in-out infinite; }
   </style>
 </head>
-<body class="bg-[#FAFAFA] text-zinc-600 font-sans antialiased min-h-screen overflow-x-hidden">
+<body class="text-zinc-700 font-sans antialiased min-h-screen overflow-x-hidden">
 
   <div id="app-shell" class="flex min-h-screen w-full safe-top safe-bottom safe-x">
 
@@ -65,8 +107,8 @@
          COLLAPSIBLE SIDEBAR — flex-shrink pushes main content right
          ═══════════════════════════════════════════════════════════════ -->
     <aside id="sidebar"
-      class="shrink-0 h-screen sticky top-0 z-40 overflow-hidden bg-white border-r border-zinc-200
-             w-0 transition-all duration-300 ease-in-out"
+            class="shrink-0 h-screen sticky top-0 z-40 overflow-hidden bg-white border-r border-zinc-200
+              w-0 transition-all duration-300 ease-in-out glass-panel"
       aria-hidden="true">
       <nav class="w-64 sm:w-72 h-full flex flex-col" aria-label="Main navigation">
         <div class="flex items-center justify-between px-5 py-5 border-b border-zinc-100">
@@ -134,24 +176,24 @@
        VIEW 1 — WEEKLY MATRIX (Main Dashboard)
        ═══════════════════════════════════════════════════════════════ -->
   <div id="view-week" class="view-container min-h-screen flex flex-col max-w-[1600px] mx-auto w-full">
-    <header class="sticky top-0 z-30 bg-[#FAFAFA]/95 backdrop-blur-sm border-b border-zinc-200 px-4 sm:px-6 py-4">
+    <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <div class="flex items-center gap-2 sm:gap-3 min-w-0">
           <button type="button" data-sidebar-toggle
-            class="touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all"
+            class="touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all elevate-hover"
             aria-label="Open menu">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
         <button id="btn-month-header" type="button"
-          class="touch-target flex items-center gap-3 px-5 py-3 rounded-2xl bg-white border border-zinc-200 shadow-sm hover:shadow-md active:scale-[0.98] transition-all">
-          <span id="week-month-label" class="text-2xl sm:text-3xl font-bold text-zinc-900 tracking-tight">June</span>
+          class="touch-target flex items-center gap-3 px-5 py-3 rounded-2xl bg-white border border-zinc-200 shadow-sm hover:shadow-md active:scale-[0.98] transition-all elevate-hover">
+          <span id="week-month-label" class="text-2xl sm:text-3xl font-display font-bold text-zinc-900 tracking-tight">June</span>
           <svg class="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         </button>
         </div>
         <div class="flex items-center gap-3">
           <p id="last-updated" class="text-xs text-zinc-400 hidden sm:block">Last updated —</p>
           <button id="btn-clear-filters" type="button"
-            class="touch-target px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-white border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all">
+            class="touch-target px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-white border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all elevate-hover">
             Clear Filters
           </button>
         </div>
@@ -175,7 +217,7 @@
     <aside id="day-user-strip" class="hidden sm:flex flex-col gap-2 p-3 border-r border-zinc-200 bg-white/80 shrink-0"></aside>
 
     <div class="flex-1 flex flex-col min-w-0">
-      <header class="sticky top-0 z-30 bg-[#FAFAFA]/95 backdrop-blur-sm border-b border-zinc-200 px-4 sm:px-6 py-4">
+      <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
         <div class="flex items-center justify-between gap-4">
           <div class="flex items-center gap-3 min-w-0">
             <button type="button" data-sidebar-toggle
@@ -189,7 +231,7 @@
           </div>
           </div>
           <button id="btn-back-week" type="button"
-            class="touch-target px-6 py-3 rounded-2xl bg-white border border-zinc-200 shadow-sm text-base font-semibold text-zinc-700 hover:shadow-md active:scale-[0.98] transition-all">
+            class="touch-target px-6 py-3 rounded-2xl bg-white border border-zinc-200 shadow-sm text-base font-semibold text-zinc-700 hover:shadow-md active:scale-[0.98] transition-all elevate-hover">
             week
           </button>
         </div>
@@ -209,7 +251,7 @@
     <aside id="month-week-strip" class="hidden md:flex flex-col gap-2 p-3 border-r border-zinc-200 bg-white/80 shrink-0"></aside>
 
     <div class="flex-1 flex flex-col min-w-0">
-      <header class="sticky top-0 z-30 bg-[#FAFAFA]/95 backdrop-blur-sm border-b border-zinc-200 px-4 sm:px-6 py-4">
+      <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
         <div class="flex items-center justify-between gap-3 mb-4">
           <div class="flex items-center gap-3 min-w-0">
             <button type="button" data-sidebar-toggle
@@ -217,10 +259,10 @@
               aria-label="Open menu">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
-            <h1 class="text-2xl sm:text-3xl font-bold text-zinc-900">Calendar</h1>
+            <h1 class="text-2xl sm:text-3xl font-display font-bold text-zinc-900">Calendar</h1>
           </div>
           <button id="btn-month-clear-filters" type="button"
-            class="touch-target px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-white border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all">
+            class="touch-target px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-white border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all elevate-hover">
             Clear Filters
           </button>
         </div>
@@ -563,7 +605,7 @@
         const dimmed = state.filteredUser && state.filteredUser !== user.id ? 'lane-dimmed' : '';
         const active = state.filteredUser === user.id;
         return `
-          <div class="week-row grid grid-cols-8 gap-1 sm:gap-2 ${dimmed}" data-user-row="${user.id}">
+          <div class="week-row grid grid-cols-8 gap-1 sm:gap-2 ${dimmed} stagger-item" data-user-row="${user.id}">
             <div class="flex items-center justify-center p-1">
               ${userBadgeHTML(user, { active, compact: true })}
             </div>
@@ -575,7 +617,7 @@
               const more = dayEvents.length > 3 ? `<div class="text-[10px] text-zinc-400 font-medium">+${dayEvents.length - 3} more</div>` : '';
               return `
                 <button type="button" data-day-link="${dateKey(day)}"
-                  class="touch-target day-cell min-h-[4.5rem] sm:min-h-[5.5rem] p-2 sm:p-3 rounded-xl bg-white border border-zinc-200 shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left overflow-hidden">
+                  class="touch-target day-cell min-h-[4.5rem] sm:min-h-[5.5rem] p-2 sm:p-3 rounded-xl bg-white border border-zinc-200 shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left overflow-hidden elevate-hover">
                   <div class="space-y-0.5">${preview}${more}</div>
                   ${dayEvents.length === 0 ? '<div class="h-full flex items-center justify-center text-zinc-300 text-xs">—</div>' : ''}
                 </button>`;
@@ -595,6 +637,8 @@
           renderWeekView();
         });
       });
+
+      applyStagger('#week-matrix', '.stagger-item');
     }
 
     function stripUserPrefix(summary) {
@@ -651,7 +695,7 @@
         const timeStr = e.allDay ? 'All day' : formatTimeReadable(e.start);
         const label = stripUserPrefix(e.summary);
         return `
-          <div class="rounded-2xl border shadow-sm p-5 sm:p-6 ${uStyle} transition-all">
+          <div class="rounded-2xl border shadow-sm p-5 sm:p-6 ${uStyle} transition-all elevate-hover stagger-item">
             <p class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">
               <span class="text-zinc-500 font-semibold text-xl sm:text-2xl md:text-3xl mr-2">${timeStr}</span>
               ${escapeHtml(label)}
@@ -659,6 +703,8 @@
             ${user ? `<p class="mt-2 text-sm font-semibold opacity-70">${user.name}</p>` : ''}
           </div>`;
       }).join('');
+
+      applyStagger('#day-timeline', '.stagger-item');
     }
 
     function escapeHtml(str) {
@@ -761,7 +807,7 @@
             <button type="button" data-day-link="${dateKey(cursor)}" ${!inMonth ? 'disabled' : ''}
               class="touch-target min-h-[3.5rem] sm:min-h-[5rem] p-2 rounded-xl transition-all text-left
                 ${inMonth
-                  ? 'bg-white border border-zinc-200 shadow-sm hover:shadow-md active:scale-[0.97] cursor-pointer'
+                  ? 'bg-white border border-zinc-200 shadow-sm hover:shadow-md active:scale-[0.97] cursor-pointer elevate-hover'
                   : 'bg-transparent border border-transparent opacity-30 cursor-default'}
                 ${isSameDay(cursor, new Date()) && inMonth ? 'ring-2 ring-zinc-900 ring-offset-1' : ''}">
               <span class="text-sm sm:text-base font-bold ${inMonth ? 'text-zinc-800' : 'text-zinc-400'}">${cursor.getDate()}</span>
@@ -773,6 +819,16 @@
 
       grid.innerHTML = cells.join('');
       bindDayLinks(grid);
+      applyStagger('#month-grid', 'button');
+    }
+
+    function applyStagger(containerSelector, itemSelector) {
+      const container = document.querySelector(containerSelector);
+      if (!container) return;
+      const items = container.querySelectorAll(itemSelector);
+      items.forEach((item, idx) => {
+        item.style.animationDelay = `${Math.min(idx * 35, 280)}ms`;
+      });
     }
 
     /* ─── Demo data for preview without iCloud URL ─── */

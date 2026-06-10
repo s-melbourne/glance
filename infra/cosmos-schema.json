@@ -1,0 +1,92 @@
+{
+  "_comment": "Glance — Cosmos DB NoSQL schema reference. Apply via ARM, Bicep, or Azure Portal.",
+  "database": {
+    "name": "GlanceDB",
+    "throughput": "serverless",
+    "note": "Use Serverless capacity for free-tier eligibility and low-traffic household workloads. Switch to 400 RU/s shared provisioned if you exceed 5GB or need SLA guarantees."
+  },
+  "containers": [
+    {
+      "name": "Chores",
+      "partitionKey": "/assignedUser",
+      "uniqueKeyPolicy": [],
+      "defaultTtl": -1,
+      "indexingPolicy": {
+        "indexingMode": "consistent",
+        "automatic": true,
+        "includedPaths": [
+          { "path": "/assignedUser/?" },
+          { "path": "/recurrence/?" },
+          { "path": "/isActive/?" },
+          { "path": "/daysOfWeek/*" },
+          { "path": "/completedDates/*" },
+          { "path": "/createdAt/?" }
+        ],
+        "excludedPaths": [
+          { "path": "/description/?" },
+          { "path": "/_etag/?" }
+        ]
+      },
+      "sampleDocument": {
+        "id": "chore-uuid-v4",
+        "assignedUser": "anna",
+        "title": "Unpack dishwasher",
+        "description": "",
+        "recurrence": "daily",
+        "daysOfWeek": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+        "completedDates": ["2026-06-10"],
+        "isActive": true,
+        "createdAt": "2026-06-01T00:00:00.000Z",
+        "updatedAt": "2026-06-10T08:22:00.000Z"
+      },
+      "notes": [
+        "Partition key /assignedUser keeps per-person queries single-partition (fast + cheap).",
+        "completedDates is an array of ISO date strings (YYYY-MM-DD). MidnightResetTimer trims it to last 7 days to control document growth.",
+        "Recurrence values: 'daily' | 'weekly' | 'once'. daysOfWeek is only evaluated for 'weekly'.",
+        "Valid assignedUser values must match the USERS array in state.js: 'anna', 'simeon', 'tennille', 'bibi'."
+      ]
+    },
+    {
+      "name": "Lists",
+      "partitionKey": "/listType",
+      "uniqueKeyPolicy": [],
+      "defaultTtl": 2592000,
+      "indexingPolicy": {
+        "indexingMode": "consistent",
+        "automatic": true,
+        "includedPaths": [
+          { "path": "/listType/?" },
+          { "path": "/checked/?" },
+          { "path": "/addedBy/?" },
+          { "path": "/createdAt/?" }
+        ],
+        "excludedPaths": [
+          { "path": "/text/?" },
+          { "path": "/_etag/?" }
+        ]
+      },
+      "sampleDocument": {
+        "id": "list-item-uuid-v4",
+        "listType": "grocery",
+        "text": "Milk (2L)",
+        "quantity": 2,
+        "unit": "litre",
+        "checked": false,
+        "addedBy": "tennille",
+        "createdAt": "2026-06-10T09:00:00.000Z",
+        "updatedAt": "2026-06-10T09:00:00.000Z"
+      },
+      "notes": [
+        "Partition key /listType isolates list queries: all 'grocery' items are co-located.",
+        "Valid listType values: 'grocery' | 'todo' | 'packing'.",
+        "defaultTtl of 2592000 = 30 days. Checked/deleted items auto-expire without manual cleanup.",
+        "Text is excluded from the index to avoid RU cost on large item names — filter by checked/addedBy/createdAt instead.",
+        "For real-time sync across devices, Azure Web PubSub should publish a 'lists:changed' event after each POST/PUT/DELETE via the /api/lists endpoint."
+      ]
+    }
+  ],
+  "conflictResolution": {
+    "strategy": "last-write-wins",
+    "note": "For a single-region family app, LWW on _ts timestamp is sufficient. If multi-region replication is added, implement a custom merge procedure on the completedDates array in the Chores container."
+  }
+}

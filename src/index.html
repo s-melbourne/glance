@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Glance">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#FFFFFF">
+  <meta name="format-detection" content="telephone=no">
+  <title>Glance</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Manrope', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            display: ['Playfair Display', 'Georgia', 'serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --glance-bg-1: #f4f5f7;
+      --glance-bg-2: #edf2f8;
+      --glance-surface: rgba(255, 255, 255, 0.9);
+      --glance-border: rgba(24, 24, 27, 0.1);
+      --glance-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+    html, body {
+      height: 100%;
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    body {
+      background:
+        radial-gradient(1200px 600px at 0% 0%, #e0ecff 0%, transparent 60%),
+        radial-gradient(900px 500px at 100% 100%, #ffe6d8 0%, transparent 55%),
+        linear-gradient(180deg, var(--glance-bg-1) 0%, var(--glance-bg-2) 100%);
+      background-attachment: fixed;
+    }
+    .safe-top { padding-top: env(safe-area-inset-top, 0px); }
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .safe-x {
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
+    }
+    .touch-target {
+      min-height: 2.75rem;
+      min-width: 2.75rem;
+    }
+    .lane-dimmed {
+      opacity: 0.22;
+      filter: grayscale(0.35);
+      pointer-events: none;
+    }
+    .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
+    .glass-panel {
+      background: var(--glance-surface);
+      border: 1px solid var(--glance-border);
+      box-shadow: var(--glance-shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .elevate-hover {
+      transition: transform 220ms ease, box-shadow 220ms ease;
+    }
+    .elevate-hover:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(24, 24, 27, 0.1);
+    }
+    @keyframes rise-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .stagger-item { animation: rise-in 380ms ease both; }
+  </style>
+</head>
+<body class="text-zinc-700 font-sans antialiased min-h-screen overflow-x-hidden">
+
+  <div id="app-shell" class="flex min-h-screen w-full safe-top safe-bottom safe-x">
+    <aside id="sidebar"
+      class="shrink-0 h-screen sticky top-0 z-40 overflow-hidden bg-white border-r border-zinc-200 w-0 transition-all duration-300 ease-in-out glass-panel"
+      aria-hidden="true">
+      <nav class="w-64 sm:w-72 h-full flex flex-col" aria-label="Main navigation">
+        <div class="flex items-center justify-between px-5 py-5 border-b border-zinc-100">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-widest text-zinc-400">Family</p>
+            <h2 class="text-xl font-bold text-zinc-900 tracking-tight">Glance</h2>
+          </div>
+          <button id="btn-sidebar-close" type="button" data-sidebar-toggle class="touch-target p-2 rounded-xl text-zinc-500 hover:bg-zinc-100 active:scale-95 transition-all" aria-label="Close menu">x</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto scrollbar-thin px-3 py-4 space-y-6">
+          <div>
+            <p class="px-2 mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Views</p>
+            <div class="space-y-1">
+              <button type="button" data-nav="week" class="sidebar-nav-item touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">Week</button>
+              <button type="button" data-nav="day" class="sidebar-nav-item touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">Today</button>
+              <button type="button" data-nav="month" class="sidebar-nav-item touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">Month</button>
+            </div>
+          </div>
+
+          <div>
+            <p class="px-2 mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Family</p>
+            <div id="sidebar-user-filters" class="space-y-1"></div>
+          </div>
+
+          <div class="space-y-1">
+            <button id="btn-sidebar-clear" type="button" class="touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">Clear Filters</button>
+            <button id="btn-sidebar-sync" type="button" class="touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">Refresh Calendar</button>
+          </div>
+        </div>
+
+        <div class="px-5 py-4 border-t border-zinc-100">
+          <p id="sidebar-last-updated" class="text-xs text-zinc-400">Last updated -</p>
+        </div>
+      </nav>
+    </aside>
+
+    <div id="main-content" class="flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-300 ease-in-out">
+      <div id="view-week" class="view-container min-h-screen flex flex-col max-w-[1600px] mx-auto w-full">
+        <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+              <button type="button" data-sidebar-toggle class="touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all elevate-hover" aria-label="Open menu">=</button>
+              <button id="btn-month-header" type="button" class="touch-target flex items-center gap-3 px-5 py-3 rounded-2xl bg-white border border-zinc-200 shadow-sm hover:shadow-md active:scale-[0.98] transition-all elevate-hover">
+                <span id="week-month-label" class="text-2xl sm:text-3xl font-display font-bold text-zinc-900 tracking-tight">June</span>
+              </button>
+            </div>
+            <div class="flex items-center gap-3">
+              <p id="last-updated" class="text-xs text-zinc-400 hidden sm:block">Last updated -</p>
+              <button id="btn-clear-filters" type="button" class="touch-target px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-white border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all elevate-hover">Clear Filters</button>
+            </div>
+          </div>
+          <p id="last-updated-mobile" class="text-xs text-zinc-400 mt-2 sm:hidden">Last updated -</p>
+        </header>
+
+        <main class="flex-1 px-2 sm:px-4 py-4 overflow-x-auto">
+          <div id="week-day-headers" class="grid grid-cols-8 gap-1 sm:gap-2 mb-2 min-w-[640px]"></div>
+          <div id="week-matrix" class="space-y-2 min-w-[640px]"></div>
+        </main>
+      </div>
+
+      <div id="view-day" class="view-container hidden min-h-screen flex max-w-[1200px] mx-auto w-full">
+        <aside id="day-user-strip" class="hidden sm:flex flex-col gap-2 p-3 border-r border-zinc-200 bg-white/80 shrink-0"></aside>
+        <div class="flex-1 flex flex-col min-w-0">
+          <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
+            <div class="flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3 min-w-0">
+                <button type="button" data-sidebar-toggle class="touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all" aria-label="Open menu">=</button>
+                <div class="min-w-0">
+                  <p id="day-date-sub" class="text-sm text-zinc-500 font-medium"></p>
+                  <h1 id="day-name-label" class="text-3xl sm:text-4xl font-bold text-zinc-900 tracking-tight">Monday</h1>
+                </div>
+              </div>
+              <button id="btn-back-week" type="button" class="touch-target px-6 py-3 rounded-2xl bg-white border border-zinc-200 shadow-sm text-base font-semibold text-zinc-700 hover:shadow-md active:scale-[0.98] transition-all elevate-hover">week</button>
+            </div>
+            <div id="day-user-strip-mobile" class="flex sm:hidden gap-2 mt-4 overflow-x-auto pb-1"></div>
+          </header>
+          <main id="day-timeline" class="flex-1 px-4 sm:px-8 py-6 overflow-y-auto scrollbar-thin space-y-3"></main>
+        </div>
+      </div>
+
+      <div id="view-month" class="view-container hidden min-h-screen flex max-w-[1400px] mx-auto w-full">
+        <aside id="month-week-strip" class="hidden md:flex flex-col gap-2 p-3 border-r border-zinc-200 bg-white/80 shrink-0"></aside>
+        <div class="flex-1 flex flex-col min-w-0">
+          <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
+            <div class="flex items-center justify-between gap-3 mb-4">
+              <div class="flex items-center gap-3 min-w-0">
+                <button type="button" data-sidebar-toggle class="touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all" aria-label="Open menu">=</button>
+                <h1 class="text-2xl sm:text-3xl font-display font-bold text-zinc-900">Calendar</h1>
+              </div>
+              <button id="btn-month-clear-filters" type="button" class="touch-target px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-white border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all elevate-hover">Clear Filters</button>
+            </div>
+            <div id="month-ribbon" class="flex gap-1 sm:gap-2 overflow-x-auto pb-1"></div>
+            <div id="month-week-strip-mobile" class="flex md:hidden gap-2 mt-3 overflow-x-auto pb-1"></div>
+          </header>
+          <div class="flex flex-1 min-h-0">
+            <aside id="month-user-strip" class="hidden sm:flex flex-col gap-2 p-3 border-r border-zinc-200 bg-white/80 shrink-0"></aside>
+            <main class="flex-1 p-3 sm:p-6 overflow-auto">
+              <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
+                <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">M</div>
+                <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">T</div>
+                <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">W</div>
+                <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">Th</div>
+                <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">F</div>
+                <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">S</div>
+                <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">S</div>
+              </div>
+              <div id="month-grid" class="grid grid-cols-7 gap-1 sm:gap-2"></div>
+            </main>
+          </div>
+          <div id="month-user-strip-mobile" class="flex sm:hidden gap-2 px-4 py-3 border-t border-zinc-200 overflow-x-auto"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./ui.js"></script>
+</body>
+</html>
