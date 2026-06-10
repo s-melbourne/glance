@@ -38,6 +38,10 @@
       --glance-surface: rgba(255, 255, 255, 0.9);
       --glance-border: rgba(24, 24, 27, 0.1);
       --glance-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --sidebar-w-collapsed: 4.25rem;
+      --sidebar-w-expanded: 17rem;
+      --sidebar-bg: #f7f6f3;
+      --sidebar-border: rgba(24, 24, 27, 0.08);
     }
     html, body {
       height: 100%;
@@ -88,56 +92,269 @@
       to { opacity: 1; transform: translateY(0); }
     }
     .stagger-item { animation: rise-in 380ms ease both; }
+
+    /* ─── Fixed sidebar rail (Copilot-style) ─── */
+    #sidebar-backdrop {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 240ms ease;
+    }
+    #sidebar-backdrop.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #sidebar {
+      width: var(--sidebar-w-collapsed);
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--sidebar-border);
+      transition: width 280ms cubic-bezier(0.4, 0, 0.2, 1), transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @media (min-width: 768px) {
+      #sidebar.is-pinned,
+      #sidebar:hover {
+        width: var(--sidebar-w-expanded);
+      }
+    }
+    @media (max-width: 767px) {
+      #sidebar {
+        width: var(--sidebar-w-expanded);
+        transform: translateX(-100%);
+      }
+      #sidebar.is-mobile-open {
+        transform: translateX(0);
+      }
+    }
+    .sidebar-label,
+    .sidebar-section-title,
+    .sidebar-meta,
+    .sidebar-profile-text,
+    .sidebar-pin-btn {
+      opacity: 0;
+      max-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      transition: opacity 180ms ease, max-width 280ms ease;
+    }
+    #sidebar.is-pinned .sidebar-label,
+    #sidebar.is-pinned .sidebar-section-title,
+    #sidebar.is-pinned .sidebar-meta,
+    #sidebar.is-pinned .sidebar-profile-text,
+    #sidebar.is-pinned .sidebar-pin-btn,
+    #sidebar:hover .sidebar-label,
+    #sidebar:hover .sidebar-section-title,
+    #sidebar:hover .sidebar-meta,
+    #sidebar:hover .sidebar-profile-text,
+    #sidebar:hover .sidebar-pin-btn,
+    #sidebar.is-mobile-open .sidebar-label,
+    #sidebar.is-mobile-open .sidebar-section-title,
+    #sidebar.is-mobile-open .sidebar-meta,
+    #sidebar.is-mobile-open .sidebar-profile-text,
+    #sidebar.is-mobile-open .sidebar-pin-btn {
+      opacity: 1;
+      max-width: 12rem;
+    }
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.625rem 0.75rem;
+      border-radius: 0.625rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #3f3f46;
+      transition: background 160ms ease, color 160ms ease;
+    }
+    .sidebar-nav-item:hover {
+      background: rgba(24, 24, 27, 0.06);
+    }
+    .sidebar-nav-item.is-active {
+      background: rgba(24, 24, 27, 0.08);
+      color: #18181b;
+      font-weight: 600;
+    }
+    .sidebar-nav-icon {
+      flex-shrink: 0;
+      width: 1.25rem;
+      height: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #52525b;
+    }
+    .sidebar-nav-item.is-active .sidebar-nav-icon {
+      color: #18181b;
+    }
+    .sidebar-user-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.625rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: background 160ms ease;
+    }
+    .sidebar-user-item:hover {
+      background: rgba(24, 24, 27, 0.06);
+    }
+    .sidebar-user-item.is-active {
+      background: rgba(24, 24, 27, 0.08);
+    }
+    .sidebar-user-dot {
+      flex-shrink: 0;
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6875rem;
+      font-weight: 700;
+    }
+    .sidebar-divider {
+      height: 1px;
+      background: var(--sidebar-border);
+      margin: 0.5rem 0.75rem;
+    }
+    .sidebar-logo {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.5rem;
+      background: linear-gradient(135deg, #6366f1 0%, #ec4899 50%, #f59e0b 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .sidebar-profile {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.625rem 0.75rem;
+      border-radius: 0.75rem;
+      transition: background 160ms ease;
+    }
+    .sidebar-profile:hover {
+      background: rgba(24, 24, 27, 0.06);
+    }
+    .sidebar-avatar {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 9999px;
+      background: #059669;
+      color: white;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    @media (min-width: 768px) {
+      #sidebar:not(.is-pinned):not(:hover) > div:first-child {
+        justify-content: center;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
+      #sidebar:not(.is-pinned):not(:hover) .sidebar-nav-item,
+      #sidebar:not(.is-pinned):not(:hover) .sidebar-user-item,
+      #sidebar:not(.is-pinned):not(:hover) .sidebar-profile {
+        justify-content: center;
+      }
+      #sidebar:not(.is-pinned):not(:hover) .sidebar-section-title,
+      #sidebar:not(.is-pinned):not(:hover) .sidebar-divider {
+        display: none;
+      }
+      #sidebar:not(.is-pinned):not(:hover) .sidebar-meta {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body class="text-zinc-700 font-sans antialiased min-h-screen overflow-x-hidden">
 
   <div id="app-shell" class="flex min-h-screen w-full safe-top safe-bottom safe-x">
+    <div id="sidebar-backdrop" class="fixed inset-0 z-40 bg-zinc-900/40 backdrop-blur-sm md:hidden" aria-hidden="true"></div>
+
     <aside id="sidebar"
-      class="shrink-0 h-screen sticky top-0 z-40 overflow-hidden bg-white border-r border-zinc-200 w-0 transition-all duration-300 ease-in-out glass-panel"
-      aria-hidden="true">
-      <nav class="w-64 sm:w-72 h-full flex flex-col" aria-label="Main navigation">
-        <div class="flex items-center justify-between px-5 py-5 border-b border-zinc-100">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-widest text-zinc-400">Family</p>
-            <h2 class="text-xl font-bold text-zinc-900 tracking-tight">Glance</h2>
+      class="fixed md:sticky top-0 left-0 z-50 md:z-40 h-screen shrink-0 flex flex-col overflow-hidden"
+      aria-label="Main navigation">
+      <div class="flex items-center justify-between gap-2 px-3 py-4 min-h-[4.25rem]">
+        <div class="flex items-center gap-3 min-w-0 overflow-hidden">
+          <div class="sidebar-logo" aria-hidden="true">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           </div>
-          <button id="btn-sidebar-close" type="button" data-sidebar-toggle class="touch-target p-2 rounded-xl text-zinc-500 hover:bg-zinc-100 active:scale-95 transition-all" aria-label="Close menu">x</button>
+          <span class="sidebar-label text-lg font-bold text-zinc-900 tracking-tight">Glance</span>
+        </div>
+        <button id="btn-sidebar-pin" type="button"
+          class="sidebar-pin-btn touch-target hidden md:flex p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-200/60 hover:text-zinc-800 transition-colors"
+          aria-label="Pin sidebar open" title="Pin sidebar">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <button id="btn-sidebar-close" type="button" data-sidebar-toggle
+          class="sidebar-pin-btn touch-target md:hidden p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-200/60"
+          aria-label="Close menu">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto scrollbar-thin px-2 pb-2" aria-label="Primary">
+        <div class="space-y-0.5">
+          <button type="button" data-nav="week" class="sidebar-nav-item sidebar-nav-item-view">
+            <span class="sidebar-nav-icon"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg></span>
+            <span class="sidebar-label">Week</span>
+          </button>
+          <button type="button" data-nav="day" class="sidebar-nav-item sidebar-nav-item-view">
+            <span class="sidebar-nav-icon"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg></span>
+            <span class="sidebar-label">Today</span>
+          </button>
+          <button type="button" data-nav="month" class="sidebar-nav-item sidebar-nav-item-view">
+            <span class="sidebar-nav-icon"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></span>
+            <span class="sidebar-label">Month</span>
+          </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto scrollbar-thin px-3 py-4 space-y-6">
-          <div>
-            <p class="px-2 mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Views</p>
-            <div class="space-y-1">
-              <button type="button" data-nav="week" class="sidebar-nav-item touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">Week</button>
-              <button type="button" data-nav="day" class="sidebar-nav-item touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">Today</button>
-              <button type="button" data-nav="month" class="sidebar-nav-item touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">Month</button>
-            </div>
-          </div>
+        <div class="sidebar-divider"></div>
 
-          <div>
-            <p class="px-2 mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Family</p>
-            <div id="sidebar-user-filters" class="space-y-1"></div>
-          </div>
+        <p class="sidebar-section-title px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Family</p>
+        <div id="sidebar-user-filters" class="space-y-0.5"></div>
 
-          <div class="space-y-1">
-            <button id="btn-sidebar-clear" type="button" class="touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">Clear Filters</button>
-            <button id="btn-sidebar-sync" type="button" class="touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">Refresh Calendar</button>
-          </div>
-        </div>
+        <div class="sidebar-divider"></div>
 
-        <div class="px-5 py-4 border-t border-zinc-100">
-          <p id="sidebar-last-updated" class="text-xs text-zinc-400">Last updated -</p>
+        <div class="space-y-0.5">
+          <button id="btn-sidebar-sync" type="button" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg></span>
+            <span class="sidebar-label">Refresh</span>
+          </button>
+          <button id="btn-sidebar-clear" type="button" class="sidebar-nav-item">
+            <span class="sidebar-nav-icon"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/></svg></span>
+            <span class="sidebar-label">Clear filters</span>
+          </button>
         </div>
       </nav>
+
+      <div class="shrink-0 border-t border-zinc-200/80 px-2 py-3 space-y-2">
+        <p id="sidebar-last-updated" class="sidebar-meta px-3 text-[11px] text-zinc-400 truncate">Last updated —</p>
+        <button type="button" id="btn-sidebar-profile" class="sidebar-profile w-full text-left">
+          <span class="sidebar-avatar">G</span>
+          <span class="sidebar-profile-text min-w-0">
+            <span class="block text-sm font-semibold text-zinc-900 truncate">Family</span>
+            <span class="block text-xs text-zinc-500 truncate">Sign in coming soon</span>
+          </span>
+        </button>
+      </div>
     </aside>
 
-    <div id="main-content" class="flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-300 ease-in-out">
+    <div id="main-content" class="flex-1 min-w-0 flex flex-col min-h-screen">
       <div id="view-week" class="view-container min-h-screen flex flex-col max-w-[1600px] mx-auto w-full">
         <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
           <div class="flex items-center justify-between gap-3 flex-wrap">
             <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-              <button type="button" data-sidebar-toggle class="touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all elevate-hover" aria-label="Open menu">=</button>
+              <button type="button" data-sidebar-toggle class="md:hidden touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all elevate-hover" aria-label="Open menu">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+              </button>
               <button id="btn-month-header" type="button" class="touch-target flex items-center gap-3 px-5 py-3 rounded-2xl bg-white border border-zinc-200 shadow-sm hover:shadow-md active:scale-[0.98] transition-all elevate-hover">
                 <span id="week-month-label" class="text-2xl sm:text-3xl font-display font-bold text-zinc-900 tracking-tight">June</span>
               </button>
@@ -162,7 +379,9 @@
           <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
             <div class="flex items-center justify-between gap-4">
               <div class="flex items-center gap-3 min-w-0">
-                <button type="button" data-sidebar-toggle class="touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all" aria-label="Open menu">=</button>
+                <button type="button" data-sidebar-toggle class="md:hidden touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all" aria-label="Open menu">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
                 <div class="min-w-0">
                   <p id="day-date-sub" class="text-sm text-zinc-500 font-medium"></p>
                   <h1 id="day-name-label" class="text-3xl sm:text-4xl font-bold text-zinc-900 tracking-tight">Monday</h1>
@@ -182,7 +401,9 @@
           <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
             <div class="flex items-center justify-between gap-3 mb-4">
               <div class="flex items-center gap-3 min-w-0">
-                <button type="button" data-sidebar-toggle class="touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all" aria-label="Open menu">=</button>
+                <button type="button" data-sidebar-toggle class="md:hidden touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all" aria-label="Open menu">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
                 <h1 class="text-2xl sm:text-3xl font-display font-bold text-zinc-900">Calendar</h1>
               </div>
               <button id="btn-month-clear-filters" type="button" class="touch-target px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-white border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all elevate-hover">Clear Filters</button>

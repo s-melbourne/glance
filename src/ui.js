@@ -113,18 +113,49 @@ function renderCurrentView() {
   renderSidebar();
 }
 
+function isMobileSidebar() {
+  return window.innerWidth < 768;
+}
+
+function applySidebarState() {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (!sidebar) return;
+
+  sidebar.classList.toggle('is-pinned', state.sidebarPinned);
+
+  if (isMobileSidebar()) {
+    sidebar.classList.toggle('is-mobile-open', state.sidebarOpen);
+    backdrop?.classList.toggle('is-visible', state.sidebarOpen);
+    document.body.classList.toggle('overflow-hidden', state.sidebarOpen);
+  } else {
+    sidebar.classList.remove('is-mobile-open');
+    backdrop?.classList.remove('is-visible');
+    document.body.classList.remove('overflow-hidden');
+  }
+}
+
 function setSidebarOpen(open) {
   state.sidebarOpen = open;
-  const sidebar = document.getElementById('sidebar');
-  sidebar.classList.toggle('w-0', !open);
-  sidebar.classList.toggle('w-64', open);
-  sidebar.classList.toggle('sm:w-72', open);
-  sidebar.setAttribute('aria-hidden', String(!open));
-  document.body.classList.toggle('overflow-hidden', open && window.innerWidth < 640);
+  applySidebarState();
+}
+
+function toggleSidebarPin() {
+  state.sidebarPinned = !state.sidebarPinned;
+  try {
+    localStorage.setItem('glance-sidebar-pinned', state.sidebarPinned ? '1' : '0');
+  } catch {
+    /* ignore */
+  }
+  applySidebarState();
 }
 
 function toggleSidebar() {
-  setSidebarOpen(!state.sidebarOpen);
+  if (isMobileSidebar()) {
+    setSidebarOpen(!state.sidebarOpen);
+  } else {
+    toggleSidebarPin();
+  }
 }
 
 function maybeCloseSidebarOnMobile() {
@@ -132,12 +163,8 @@ function maybeCloseSidebarOnMobile() {
 }
 
 function renderSidebar() {
-  document.querySelectorAll('.sidebar-nav-item').forEach(btn => {
-    const isActive = btn.dataset.nav === state.view;
-    btn.classList.toggle('bg-zinc-900', isActive);
-    btn.classList.toggle('text-white', isActive);
-    btn.classList.toggle('shadow-sm', isActive);
-    btn.classList.toggle('text-zinc-700', !isActive);
+  document.querySelectorAll('.sidebar-nav-item-view').forEach(btn => {
+    btn.classList.toggle('is-active', btn.dataset.nav === state.view);
   });
 
   const filtersEl = document.getElementById('sidebar-user-filters');
@@ -145,13 +172,12 @@ function renderSidebar() {
 
   filtersEl.innerHTML = USERS.map(user => {
     const active = state.filteredUser === user.id;
+    const initial = user.name.charAt(0);
     return `
       <button type="button" data-user-filter="${user.id}"
-        class="touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-semibold border shadow-sm
-          ${user.bg} ${user.border} ${user.text} hover:shadow-md active:scale-[0.98] transition-all
-          ${active ? 'ring-2 ring-offset-2 ring-zinc-400' : ''}">
-        <span class="w-2.5 h-2.5 rounded-full ${user.dot} shrink-0"></span>
-        ${user.name}
+        class="sidebar-user-item ${active ? 'is-active' : ''}">
+        <span class="sidebar-user-dot ${user.dot} text-white">${initial}</span>
+        <span class="sidebar-label">${user.name}</span>
       </button>`;
   }).join('');
 
@@ -412,6 +438,9 @@ function initEventListeners() {
     btn.addEventListener('click', toggleSidebar);
   });
 
+  document.getElementById('sidebar-backdrop')?.addEventListener('click', () => setSidebarOpen(false));
+  document.getElementById('btn-sidebar-pin')?.addEventListener('click', toggleSidebarPin);
+
   document.querySelectorAll('[data-nav]').forEach(btn => {
     btn.addEventListener('click', () => {
       const target = btn.dataset.nav;
@@ -441,7 +470,8 @@ function initEventListeners() {
   byId('btn-month-clear-filters')?.addEventListener('click', clearFilters);
 
   window.addEventListener('resize', () => {
-    if (window.innerWidth >= 640) document.body.classList.remove('overflow-hidden');
+    if (!isMobileSidebar()) setSidebarOpen(false);
+    applySidebarState();
   });
 }
 
@@ -469,7 +499,13 @@ function loadDemoEvents() {
 
 async function init() {
   initEventListeners();
+  try {
+    state.sidebarPinned = localStorage.getItem('glance-sidebar-pinned') === '1';
+  } catch {
+    /* ignore */
+  }
   setSidebarOpen(false);
+  applySidebarState();
   showView('week');
   await syncCalendarData();
   if (getEvents().length === 0) {

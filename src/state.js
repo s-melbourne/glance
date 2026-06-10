@@ -21,6 +21,7 @@ export const state = {
   weekStartDate: startOfDay(new Date()),
   anchoredFromMonth: false,
   sidebarOpen: false,
+  sidebarPinned: false,
 };
 
 let events = [];
