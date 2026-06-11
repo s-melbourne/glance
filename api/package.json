@@ -12,11 +12,12 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@azure/functions": "^4.0.0",
     "@azure/cosmos": "^4.1.0",
+    "@azure/functions": "^4.0.0",
     "ical.js": "^1.5.0"
   },
   "devDependencies": {
-    "azure-functions-core-tools": "^4.0.0"
+    "azure-functions-core-tools": "^4.0.0",
+    "azurite": "^3.35.0"
   }
 }
