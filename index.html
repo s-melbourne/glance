@@ -12,41 +12,16 @@
   <title>Glance</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/ical.js@1.5.0/build/ical.min.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Manrope', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-            display: ['Playfair Display', 'Georgia', 'serif'],
-          },
-        },
-      },
-    };
-  </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --glance-bg-1: #f4f5f7;
-      --glance-bg-2: #edf2f8;
-      --glance-surface: rgba(255, 255, 255, 0.9);
-      --glance-border: rgba(24, 24, 27, 0.1);
-      --glance-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-    }
     html, body {
       height: 100%;
+      margin: 0;
       overscroll-behavior: none;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
-    }
-    body {
-      background:
-        radial-gradient(1200px 600px at 0% 0%, #e0ecff 0%, transparent 60%),
-        radial-gradient(900px 500px at 100% 100%, #ffe6d8 0%, transparent 55%),
-        linear-gradient(180deg, var(--glance-bg-1) 0%, var(--glance-bg-2) 100%);
-      background-attachment: fixed;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     .safe-top { padding-top: env(safe-area-inset-top, 0px); }
     .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -54,253 +29,152 @@
       padding-left: env(safe-area-inset-left, 0px);
       padding-right: env(safe-area-inset-right, 0px);
     }
-    .touch-target {
-      min-height: 2.75rem;
-      min-width: 2.75rem;
-    }
-    .lane-dimmed {
-      opacity: 0.22;
-      filter: grayscale(0.35);
-      pointer-events: none;
-    }
-    .scrollbar-thin::-webkit-scrollbar { width: 4px; }
-    .scrollbar-thin::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
-    .glass-panel {
-      background: var(--glance-surface);
-      border: 1px solid var(--glance-border);
-      box-shadow: var(--glance-shadow);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-    .elevate-hover {
-      transition: transform 220ms ease, box-shadow 220ms ease;
-    }
-    .elevate-hover:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 28px rgba(24, 24, 27, 0.1);
-    }
-    @keyframes rise-in {
-      from {
-        opacity: 0;
-        transform: translateY(8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    .stagger-item {
-      animation: rise-in 380ms ease both;
-    }
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-    .sync-pulse { animation: pulse-dot 2s ease-in-out infinite; }
+    .scrollbar-thin::-webkit-scrollbar { width: 3px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
+    .filter-fade { transition: opacity 260ms ease, transform 260ms ease; }
+    .filter-fade.is-dimmed { opacity: 0.15; transform: scale(0.98); pointer-events: none; }
     .month-grid-8 {
       display: grid;
-      grid-template-columns: minmax(3.25rem, 4.5rem) repeat(7, minmax(0, 1fr));
+      grid-template-columns: minmax(3.5rem, 5rem) repeat(7, minmax(0, 1fr));
     }
-    .month-week-btn {
-      align-self: center;
-      justify-self: stretch;
+    @keyframes rise-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .rise-in { animation: rise-in 340ms ease both; }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.92); }
+    }
+    .status-pulse { animation: pulse-dot 2.4s ease-in-out infinite; }
+    @keyframes hub-tap {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.82; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .hub-tap-flash { animation: hub-tap 200ms ease-out; }
+    @keyframes iosPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+    .clock-colon {
+      animation: iosPulse 1s infinite ease-in-out;
+      display: inline-block;
+    }
+    #ios-clock {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
     }
   </style>
 </head>
-<body class="text-zinc-700 font-sans antialiased min-h-screen overflow-x-hidden">
+<body class="bg-white text-zinc-900 antialiased">
 
-  <div id="app-shell" class="flex min-h-screen w-full safe-top safe-bottom safe-x">
+  <div id="app-shell" class="flex h-screen w-screen overflow-hidden bg-white safe-top safe-x">
 
-    <!-- ═══════════════════════════════════════════════════════════════
-         COLLAPSIBLE SIDEBAR — flex-shrink pushes main content right
-         ═══════════════════════════════════════════════════════════════ -->
-    <aside id="sidebar"
-            class="shrink-0 h-screen sticky top-0 z-40 overflow-hidden bg-white border-r border-zinc-200
-              w-0 transition-all duration-300 ease-in-out glass-panel"
-      aria-hidden="true">
-      <nav class="w-64 sm:w-72 h-full flex flex-col" aria-label="Main navigation">
-        <div class="flex items-center justify-between px-5 py-5 border-b border-zinc-100">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-widest text-zinc-400">Family</p>
-            <h2 class="text-xl font-bold text-zinc-900 tracking-tight">Glance</h2>
-          </div>
-          <button id="btn-sidebar-close" type="button" data-sidebar-toggle
-            class="touch-target p-2 rounded-xl text-zinc-500 hover:bg-zinc-100 active:scale-95 transition-all"
-            aria-label="Close menu">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-
-        <div class="flex-1 overflow-y-auto scrollbar-thin px-3 py-4 space-y-6">
-          <div>
-            <p class="px-2 mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Views</p>
-            <div class="space-y-1">
-              <button type="button" data-nav="week" class="sidebar-nav-item touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">
-                <svg class="w-5 h-5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                Week
-              </button>
-              <button type="button" data-nav="day" class="sidebar-nav-item touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">
-                <svg class="w-5 h-5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Today
-              </button>
-              <button type="button" data-nav="month" class="sidebar-nav-item touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">
-                <svg class="w-5 h-5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                Month
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <p class="px-2 mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Family</p>
-            <div id="sidebar-user-filters" class="space-y-1"></div>
-          </div>
-
-          <div class="space-y-1">
-            <button id="btn-sidebar-clear" type="button"
-              class="touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">
-              <svg class="w-5 h-5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-              Clear Filters
-            </button>
-            <button id="btn-sidebar-sync" type="button"
-              class="touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] transition-all">
-              <svg class="w-5 h-5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              Refresh Calendar
-            </button>
-          </div>
-        </div>
-
-        <div class="px-5 py-4 border-t border-zinc-100">
-          <p id="sidebar-last-updated" class="text-xs text-zinc-400">Last updated —</p>
-        </div>
-      </nav>
-    </aside>
-
-    <!-- ═══════════════════════════════════════════════════════════════
-         MAIN CONTENT — flex-1 resizes when sidebar expands
-         ═══════════════════════════════════════════════════════════════ -->
-    <div id="main-content" class="flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-300 ease-in-out">
-
-  <!-- ═══════════════════════════════════════════════════════════════
-       VIEW 1 — WEEKLY MATRIX (Main Dashboard)
-       ═══════════════════════════════════════════════════════════════ -->
-  <div id="view-week" class="view-container min-h-screen flex flex-col max-w-[1600px] mx-auto w-full">
-    <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
-      <div class="flex items-center justify-between gap-3 flex-wrap">
-        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-          <button type="button" data-sidebar-toggle
-            class="touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all elevate-hover"
-            aria-label="Open menu">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-          </button>
-        <button id="btn-month-header" type="button"
-          class="touch-target flex items-center gap-3 px-5 py-3 rounded-2xl bg-white border border-zinc-200 shadow-sm hover:shadow-md active:scale-[0.98] transition-all elevate-hover">
-          <span id="week-month-label" class="text-2xl sm:text-3xl font-display font-bold text-zinc-900 tracking-tight">June</span>
-          <svg class="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    <!-- Ultra-slim navigation rail (desktop / tablet) -->
+    <nav id="nav-rail" class="hidden sm:flex w-20 h-full shrink-0 bg-[#F2F2F7]/60 backdrop-blur-md border-r border-zinc-200/50 flex-col justify-between items-center py-6 z-50" aria-label="Primary navigation">
+      <div class="flex flex-col items-center gap-6">
+        <button type="button" id="system-hub-dot" onclick="resetDashboard()"
+          class="touch-target w-9 h-9 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-600 flex items-center justify-center shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:scale-105 active:scale-95 transition-transform"
+          aria-label="Home — reset dashboard" title="Home">
+          <span class="w-2 h-2 rounded-full bg-white status-pulse pointer-events-none"></span>
         </button>
-        </div>
-        <div class="flex items-center gap-3">
-          <p id="last-updated" class="text-xs text-zinc-400 hidden sm:block">Last updated —</p>
-          <button id="btn-clear-filters" type="button"
-            class="touch-target px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-white border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all elevate-hover">
-            Clear Filters
+        <div class="flex flex-col items-center gap-2">
+          <button type="button" data-nav="week" class="nav-btn touch-target p-3 rounded-2xl text-zinc-400 hover:text-zinc-800 transition-colors" aria-label="Week view" title="Week">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          </button>
+          <button type="button" data-nav="day" class="nav-btn touch-target p-3 rounded-2xl text-zinc-400 hover:text-zinc-800 transition-colors" aria-label="Today view" title="Today">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          </button>
+          <button type="button" data-nav="month" class="nav-btn touch-target p-3 rounded-2xl text-zinc-400 hover:text-zinc-800 transition-colors" aria-label="Month view" title="Month">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           </button>
         </div>
       </div>
-      <p id="last-updated-mobile" class="text-xs text-zinc-400 mt-2 sm:hidden">Last updated —</p>
-    </header>
+      <div class="flex flex-col items-center gap-3">
+        <button type="button" id="btn-sync" class="touch-target p-3 rounded-2xl text-zinc-400 hover:text-zinc-800 transition-colors" aria-label="Refresh calendar" title="Refresh">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+        <span id="status-dot" class="w-2 h-2 rounded-full bg-emerald-400 status-pulse" title="Operational"></span>
+      </div>
+    </nav>
 
-    <main class="flex-1 px-2 sm:px-4 py-4 overflow-x-auto">
-      <!-- Day column headers -->
-      <div id="week-day-headers" class="grid grid-cols-8 gap-1 sm:gap-2 mb-2 min-w-[640px]"></div>
-      <!-- User rows -->
-      <div id="week-matrix" class="space-y-2 min-w-[640px]"></div>
-    </main>
-  </div>
+    <!-- Family filter column -->
+    <aside id="family-rail" class="hidden sm:flex w-14 shrink-0 flex-col items-center gap-3 py-8 border-r border-zinc-100 bg-white" aria-label="Family filters"></aside>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       VIEW 2 — FOCUSED DAILY TIMELINE
-       ═══════════════════════════════════════════════════════════════ -->
-  <div id="view-day" class="view-container hidden min-h-screen flex max-w-[1200px] mx-auto w-full">
-    <!-- User filter strip (left margin) -->
-    <aside id="day-user-strip" class="hidden sm:flex flex-col gap-2 p-3 border-r border-zinc-200 bg-white/80 shrink-0"></aside>
+    <!-- Main canvas -->
+    <main id="main-content" class="flex-1 min-w-0 h-full flex flex-col bg-white overflow-hidden safe-bottom">
 
-    <div class="flex-1 flex flex-col min-w-0">
-      <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
-        <div class="flex items-center justify-between gap-4">
-          <div class="flex items-center gap-3 min-w-0">
-            <button type="button" data-sidebar-toggle
-              class="touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all"
-              aria-label="Open menu">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-            </button>
-          <div class="min-w-0">
-            <p id="day-date-sub" class="text-sm text-zinc-500 font-medium"></p>
-            <h1 id="day-name-label" class="text-3xl sm:text-4xl font-bold text-zinc-900 tracking-tight">Monday</h1>
-          </div>
-          </div>
-          <button id="btn-back-week" type="button"
-            class="touch-target px-6 py-3 rounded-2xl bg-white border border-zinc-200 shadow-sm text-base font-semibold text-zinc-700 hover:shadow-md active:scale-[0.98] transition-all elevate-hover">
-            week
-          </button>
+      <header id="main-header" class="shrink-0 flex justify-between items-baseline gap-8 pt-8 px-8 pb-4 bg-white border-b border-zinc-100">
+        <button type="button" id="btn-month-header" class="text-left group min-w-0 flex-1">
+          <p id="header-eyebrow" class="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-400 mb-1">Week</p>
+          <h1 id="header-title" class="text-3xl sm:text-4xl font-bold tracking-tight text-zinc-900 leading-none group-hover:text-zinc-600 transition-colors">June</h1>
+        </button>
+        <div id="ios-clock-wrapper" class="shrink-0 flex flex-col items-end pl-2">
+          <div id="ios-clock" class="text-5xl md:text-6xl font-light tracking-tight text-zinc-400/90 tabular-nums antialiased selection:bg-transparent leading-none select-none" aria-live="polite">00<span class="clock-colon mx-0.5">:</span>00</div>
+          <p id="last-updated" class="text-[11px] font-medium text-zinc-400 tracking-wide mt-2">Last updated —</p>
         </div>
-        <!-- Mobile user filters -->
-        <div id="day-user-strip-mobile" class="flex sm:hidden gap-2 mt-4 overflow-x-auto pb-1"></div>
       </header>
 
-      <main id="day-timeline" class="flex-1 px-4 sm:px-8 py-6 overflow-y-auto scrollbar-thin space-y-3"></main>
-    </div>
-  </div>
+      <!-- VIEW 1: Masonry Week Hub -->
+      <section id="view-week" class="view-panel flex flex-col flex-1 min-h-0">
+        <div id="week-columns" class="flex-1 min-h-0 grid grid-cols-7 h-full divide-x divide-zinc-100 bg-white overflow-hidden"></div>
+      </section>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       VIEW 3 — MACRO MONTHLY GRID
-       ═══════════════════════════════════════════════════════════════ -->
-  <div id="view-month" class="view-container hidden min-h-screen flex flex-col max-w-[1400px] mx-auto w-full">
-    <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
-      <div class="flex items-center justify-between gap-3 mb-4">
-        <div class="flex items-center gap-3 min-w-0">
-          <button type="button" data-sidebar-toggle
-            class="touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all"
-            aria-label="Open menu">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-          </button>
-          <h1 class="text-2xl sm:text-3xl font-display font-bold text-zinc-900">Calendar</h1>
+      <!-- VIEW 2: Today List -->
+      <section id="view-day" class="view-panel hidden flex-col flex-1 min-h-0">
+        <div class="shrink-0 flex items-center justify-between gap-4 px-8 py-3 border-b border-zinc-100">
+          <div id="family-mobile" class="flex sm:hidden gap-2 overflow-x-auto pb-0.5"></div>
+          <div class="hidden sm:block flex-1"></div>
+          <button type="button" id="btn-back-week" class="touch-target shrink-0 px-4 py-2 rounded-2xl text-[13px] font-semibold text-zinc-500 border border-zinc-100 shadow-[0_8px_32px_rgba(0,0,0,0.02)] hover:bg-zinc-50 transition-colors">Week</button>
         </div>
-        <button id="btn-month-clear-filters" type="button"
-          class="touch-target px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-white border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all elevate-hover">
-          Clear Filters
-        </button>
-      </div>
-      <div id="month-ribbon" class="flex gap-1 sm:gap-2 overflow-x-auto pb-1"></div>
-    </header>
+        <div id="day-timeline" class="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-8 py-8 space-y-4"></div>
+      </section>
 
-    <main class="flex-1 p-3 sm:p-6 overflow-auto">
-      <div id="month-grid" class="month-grid-8 gap-1 sm:gap-2 min-w-[640px]"></div>
+      <!-- VIEW 3: Month Matrix -->
+      <section id="view-month" class="view-panel hidden flex-col flex-1 min-h-0">
+        <div class="shrink-0 flex items-center justify-between gap-4 px-8 py-3 border-b border-zinc-100">
+          <div id="month-ribbon" class="flex flex-1 gap-2 overflow-x-auto scrollbar-thin pb-0.5"></div>
+          <button type="button" id="btn-clear-filters" class="touch-target shrink-0 px-4 py-2 rounded-2xl text-[13px] font-semibold text-zinc-500 border border-zinc-100 hover:bg-zinc-50 transition-colors">Clear</button>
+        </div>
+        <div class="flex-1 min-h-0 overflow-auto">
+          <div id="month-grid" class="month-grid-8 gap-3 p-6 h-full min-w-[640px] bg-white"></div>
+        </div>
+      </section>
+
+      <!-- Mobile bottom navigation -->
+      <nav id="nav-mobile" class="sm:hidden shrink-0 flex items-center justify-around px-4 py-3 border-t border-zinc-100 bg-[#F2F2F7]/80 backdrop-blur-md" aria-label="Mobile navigation">
+        <button type="button" data-nav="week" class="nav-btn-mobile touch-target p-3 rounded-2xl text-zinc-400" aria-label="Week">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        </button>
+        <button type="button" data-nav="day" class="nav-btn-mobile touch-target p-3 rounded-2xl text-zinc-400" aria-label="Today">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        </button>
+        <button type="button" data-nav="month" class="nav-btn-mobile touch-target p-3 rounded-2xl text-zinc-400" aria-label="Month">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </button>
+        <button type="button" id="btn-sync-mobile" class="touch-target p-3 rounded-2xl text-zinc-400" aria-label="Refresh">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+      </nav>
     </main>
   </div>
 
-    </div><!-- /main-content -->
-  </div><!-- /app-shell -->
-
   <script>
-    /* ─── iCloud feed URL (replace with your published calendar link) ─── */
     const ICLOUD_URL = "YOUR_HTTPS_ICLOUD_LINK_HERE";
 
-    /* ─── Family member configuration ─── */
     const USERS = [
-      { id: 'anna',    name: 'Anna',    keywords: ['anna'],    bg: 'bg-pink-50',    border: 'border-pink-200',    text: 'text-pink-700',    dot: 'bg-pink-400' },
-      { id: 'simeon',  name: 'Simeon',  keywords: ['simeon'],  bg: 'bg-blue-50',    border: 'border-blue-200',    text: 'text-blue-700',    dot: 'bg-blue-400' },
-      { id: 'tennille',name: 'Tennille',keywords: ['tennille'],bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', dot: 'bg-emerald-400' },
-      { id: 'bibi',    name: 'Bibi',    keywords: ['bibi'],    bg: 'bg-purple-50',  border: 'border-purple-200',  text: 'text-purple-700',  dot: 'bg-purple-400' },
+      { id: 'anna',     name: 'Anna',     keywords: ['anna'],     initial: 'A', pastel: 'bg-pink-100',   ribbon: 'border-l-pink-400',   dash: 'bg-pink-400',   ring: 'ring-pink-400',   avatar: 'bg-pink-100 text-pink-600' },
+      { id: 'simeon',   name: 'Simeon',   keywords: ['simeon'],   initial: 'S', pastel: 'bg-blue-100',   ribbon: 'border-l-blue-400',   dash: 'bg-blue-400',   ring: 'ring-blue-400',   avatar: 'bg-blue-100 text-blue-600' },
+      { id: 'tennille', name: 'Tennille', keywords: ['tennille'], initial: 'T', pastel: 'bg-emerald-100', ribbon: 'border-l-emerald-400', dash: 'bg-emerald-400', ring: 'ring-emerald-400', avatar: 'bg-emerald-100 text-emerald-600' },
+      { id: 'bibi',     name: 'Bibi',     keywords: ['bibi'],     initial: 'B', pastel: 'bg-purple-100', ribbon: 'border-l-purple-400', dash: 'bg-purple-400', ring: 'ring-purple-400', avatar: 'bg-purple-100 text-purple-600' },
     ];
 
     const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const MONTH_SHORT = ['J','F','M','A','M','June','J','A','S','O','N','D'];
+    const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
     const SYNC_INTERVAL_MS = 15 * 60 * 1000;
 
-    /* ─── Application state ─── */
     let events = [];
     let state = {
       view: 'week',
@@ -310,13 +184,11 @@
       filteredUser: null,
       weekStartDate: startOfDay(new Date()),
       anchoredFromMonth: false,
-      sidebarOpen: false,
     };
 
     let syncTimer = null;
     let midnightTimer = null;
 
-    /* ─── Date utilities ─── */
     function startOfDay(d) {
       const x = new Date(d);
       x.setHours(0, 0, 0, 0);
@@ -342,7 +214,8 @@
     function formatTimeReadable(d) {
       const h = d.getHours() % 12 || 12;
       const m = d.getMinutes();
-      return m === 0 ? `${h}:00` : `${h}:${String(m).padStart(2, '0')}`;
+      const suffix = d.getHours() >= 12 ? 'PM' : 'AM';
+      return m === 0 ? `${h} ${suffix}` : `${h}:${String(m).padStart(2, '0')} ${suffix}`;
     }
 
     function getRollingDays(startDate) {
@@ -352,11 +225,9 @@
     function getMondayOfWeek(d) {
       const x = startOfDay(d);
       const day = x.getDay();
-      const diff = day === 0 ? -6 : 1 - day;
-      return addDays(x, diff);
+      return addDays(x, day === 0 ? -6 : 1 - day);
     }
 
-    /* ─── Event parsing & user matching ─── */
     function matchUser(text) {
       const lower = (text || '').toLowerCase();
       for (const user of USERS) {
@@ -368,10 +239,9 @@
     function parseICalEvents(icalData) {
       const jcal = ICAL.parse(icalData);
       const comp = new ICAL.Component(jcal);
-      const vevents = comp.getAllSubcomponents('vevent');
       const parsed = [];
 
-      for (const vevent of vevents) {
+      for (const vevent of comp.getAllSubcomponents('vevent')) {
         const event = new ICAL.Event(vevent);
         const summary = event.summary || 'Untitled';
         const start = event.startDate.toJSDate();
@@ -392,235 +262,15 @@
       return parsed;
     }
 
-    function getEventsForDay(day, userId = null) {
+    function getEventsForDay(day) {
       const key = dateKey(day);
       return events
         .filter(e => {
-          const eDay = startOfDay(e.start);
-          if (dateKey(eDay) !== key) return false;
-          if (userId && (!e.user || e.user.id !== userId)) return false;
+          if (dateKey(startOfDay(e.start)) !== key) return false;
           if (state.filteredUser && (!e.user || e.user.id !== state.filteredUser)) return false;
           return true;
         })
         .sort((a, b) => a.start - b.start);
-    }
-
-    function getEventsForUserOnDay(userId, day) {
-      const key = dateKey(day);
-      return events
-        .filter(e => e.user && e.user.id === userId && dateKey(startOfDay(e.start)) === key)
-        .sort((a, b) => a.start - b.start);
-    }
-
-    /* ─── Calendar fetch ─── */
-    async function fetchCalendarData() {
-      if (!ICLOUD_URL || ICLOUD_URL === 'YOUR_HTTPS_ICLOUD_LINK_HERE') {
-        updateLastSynced(null, 'Set ICLOUD_URL to sync');
-        return;
-      }
-
-      try {
-        const proxiedUrl = 'https://corsproxy.io/?url=' + encodeURIComponent(ICLOUD_URL);
-        const response = await fetch(proxiedUrl);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const text = await response.text();
-        events = parseICalEvents(text);
-        updateLastSynced(new Date());
-        renderCurrentView();
-      } catch (err) {
-        console.error('Calendar sync failed:', err);
-        updateLastSynced(null, 'Sync failed');
-      }
-    }
-
-    function updateLastSynced(date, overrideText) {
-      const text = overrideText || (date
-        ? `Last updated ${date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
-        : 'Last updated —');
-      document.getElementById('last-updated').textContent = text;
-      document.getElementById('last-updated-mobile').textContent = text;
-      const sidebarEl = document.getElementById('sidebar-last-updated');
-      if (sidebarEl) sidebarEl.textContent = text;
-    }
-
-    function startSyncLoop() {
-      fetchCalendarData();
-      if (syncTimer) clearInterval(syncTimer);
-      syncTimer = setInterval(fetchCalendarData, SYNC_INTERVAL_MS);
-    }
-
-    function scheduleMidnightRollover() {
-      if (midnightTimer) clearTimeout(midnightTimer);
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 1, 0);
-      const ms = tomorrow - now;
-      midnightTimer = setTimeout(() => {
-        if (!state.anchoredFromMonth) {
-          state.weekStartDate = startOfDay(new Date());
-        }
-        state.selectedDate = startOfDay(new Date());
-        renderCurrentView();
-        scheduleMidnightRollover();
-      }, ms);
-    }
-
-    /* ─── View navigation ─── */
-    function showView(name) {
-      state.view = name;
-      document.querySelectorAll('.view-container').forEach(el => el.classList.add('hidden'));
-      const target = document.getElementById(`view-${name}`);
-      if (target) target.classList.remove('hidden');
-      renderCurrentView();
-    }
-
-    function renderCurrentView() {
-      if (state.view === 'week') renderWeekView();
-      else if (state.view === 'day') renderDayView();
-      else if (state.view === 'month') renderMonthView();
-      renderSidebar();
-    }
-
-    /* ─── Collapsible sidebar ─── */
-    function setSidebarOpen(open) {
-      state.sidebarOpen = open;
-      const sidebar = document.getElementById('sidebar');
-      sidebar.classList.toggle('w-0', !open);
-      sidebar.classList.toggle('w-64', open);
-      sidebar.classList.toggle('sm:w-72', open);
-      sidebar.setAttribute('aria-hidden', String(!open));
-      document.body.classList.toggle('overflow-hidden', open && window.innerWidth < 640);
-    }
-
-    function toggleSidebar() {
-      setSidebarOpen(!state.sidebarOpen);
-    }
-
-    function maybeCloseSidebarOnMobile() {
-      if (window.innerWidth < 768 && state.sidebarOpen) setSidebarOpen(false);
-    }
-
-    function renderSidebar() {
-      document.querySelectorAll('.sidebar-nav-item').forEach(btn => {
-        const isActive = btn.dataset.nav === state.view;
-        btn.classList.toggle('bg-zinc-900', isActive);
-        btn.classList.toggle('text-white', isActive);
-        btn.classList.toggle('shadow-sm', isActive);
-        btn.classList.toggle('text-zinc-700', !isActive);
-        const icon = btn.querySelector('svg');
-        if (icon) {
-          icon.classList.toggle('text-zinc-400', !isActive);
-          icon.classList.toggle('text-zinc-300', isActive);
-        }
-      });
-
-      const filtersEl = document.getElementById('sidebar-user-filters');
-      if (!filtersEl) return;
-      filtersEl.innerHTML = USERS.map(user => {
-        const active = state.filteredUser === user.id;
-        return `
-          <button type="button" data-user-filter="${user.id}"
-            class="touch-target w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-semibold border shadow-sm
-              ${user.bg} ${user.border} ${user.text} hover:shadow-md active:scale-[0.98] transition-all
-              ${active ? 'ring-2 ring-offset-2 ring-zinc-400' : ''}">
-            <span class="w-2.5 h-2.5 rounded-full ${user.dot} shrink-0"></span>
-            ${user.name}
-          </button>`;
-      }).join('');
-      bindUserFilterButtons(filtersEl);
-    }
-
-    function clearFilters() {
-      state.filteredUser = null;
-      state.anchoredFromMonth = false;
-      state.weekStartDate = startOfDay(new Date());
-      renderCurrentView();
-    }
-
-    /* ─── User badge HTML ─── */
-    function userBadgeHTML(user, options = {}) {
-      const { active = false, compact = false, onClick = true } = options;
-      const activeRing = active ? 'ring-2 ring-offset-2 ring-zinc-400' : '';
-      const size = compact ? 'px-3 py-2 text-sm' : 'px-4 py-3 text-base sm:text-lg';
-      const click = onClick ? `data-user-filter="${user.id}"` : '';
-      return `
-        <button type="button" ${click}
-          class="touch-target user-badge ${size} rounded-2xl font-semibold ${user.bg} ${user.border} ${user.text} border shadow-sm hover:shadow-md active:scale-[0.97] transition-all ${activeRing} whitespace-nowrap">
-          ${user.name}
-        </button>`;
-    }
-
-    function bindUserFilterButtons(container) {
-      container.querySelectorAll('[data-user-filter]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.userFilter;
-          state.filteredUser = state.filteredUser === id ? null : id;
-          renderCurrentView();
-        });
-      });
-    }
-
-    /* ─── VIEW 1: Weekly Matrix ─── */
-    function renderWeekView() {
-      const days = getRollingDays(state.weekStartDate);
-      const monthLabel = document.getElementById('week-month-label');
-      const today = new Date();
-      monthLabel.textContent = MONTH_NAMES[days[0].getMonth()];
-
-      const headersEl = document.getElementById('week-day-headers');
-      headersEl.innerHTML = `
-        <div class="flex items-center justify-center text-xs sm:text-sm font-semibold text-zinc-400 py-2"></div>
-        ${days.map(day => {
-          const isToday = isSameDay(day, today);
-          return `
-            <button type="button" data-day-link="${dateKey(day)}"
-              class="touch-target day-cell-header flex flex-col items-center justify-center py-2 sm:py-3 rounded-xl ${isToday ? 'bg-zinc-900 text-white' : 'bg-white border border-zinc-200 text-zinc-700'} shadow-sm hover:shadow-md active:scale-[0.97] transition-all">
-              <span class="text-[10px] sm:text-xs font-medium opacity-80">${DAY_SHORT[day.getDay()]}</span>
-              <span class="text-lg sm:text-xl font-bold">${day.getDate()}</span>
-            </button>`;
-        }).join('')}
-      `;
-
-      const matrixEl = document.getElementById('week-matrix');
-      matrixEl.innerHTML = USERS.map(user => {
-        const dimmed = state.filteredUser && state.filteredUser !== user.id ? 'lane-dimmed' : '';
-        const active = state.filteredUser === user.id;
-        return `
-          <div class="week-row grid grid-cols-8 gap-1 sm:gap-2 ${dimmed} stagger-item" data-user-row="${user.id}">
-            <div class="flex items-center justify-center p-1">
-              ${userBadgeHTML(user, { active, compact: true })}
-            </div>
-            ${days.map(day => {
-              const dayEvents = getEventsForUserOnDay(user.id, day);
-              const preview = dayEvents.slice(0, 3).map(e => `
-                <div class="truncate text-[10px] sm:text-xs font-medium ${user.text} leading-tight">${e.allDay ? 'All day' : formatTimeReadable(e.start)} ${stripUserPrefix(e.summary)}</div>
-              `).join('');
-              const more = dayEvents.length > 3 ? `<div class="text-[10px] text-zinc-400 font-medium">+${dayEvents.length - 3} more</div>` : '';
-              return `
-                <button type="button" data-day-link="${dateKey(day)}"
-                  class="touch-target day-cell min-h-[4.5rem] sm:min-h-[5.5rem] p-2 sm:p-3 rounded-xl bg-white border border-zinc-200 shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left overflow-hidden elevate-hover">
-                  <div class="space-y-0.5">${preview}${more}</div>
-                  ${dayEvents.length === 0 ? '<div class="h-full flex items-center justify-center text-zinc-300 text-xs">—</div>' : ''}
-                </button>`;
-            }).join('')}
-          </div>`;
-      }).join('');
-
-      bindUserFilterButtons(matrixEl);
-      bindDayLinks(headersEl);
-      bindDayLinks(matrixEl);
-
-      matrixEl.querySelectorAll('.week-row .user-badge').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const id = btn.dataset.userFilter;
-          state.filteredUser = state.filteredUser === id ? null : id;
-          renderWeekView();
-        });
-      });
-
-      applyStagger('#week-matrix', '.stagger-item');
     }
 
     function stripUserPrefix(summary) {
@@ -633,6 +283,231 @@
       return s.replace(/^[-:,\s]+/, '').trim() || summary;
     }
 
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function isEventDimmed(event) {
+      return state.filteredUser && (!event.user || event.user.id !== state.filteredUser);
+    }
+
+    function ticketHTML(event, compact = true) {
+      const user = event.user;
+      const u = user || { pastel: 'bg-zinc-100', ribbon: 'border-l-zinc-300', avatar: 'bg-zinc-100 text-zinc-500', initial: '?' };
+      const timeStr = event.allDay ? 'All day' : formatTimeReadable(event.start);
+      const label = stripUserPrefix(event.summary);
+      const dimmed = isEventDimmed(event) ? 'is-dimmed' : '';
+      const pad = compact ? 'p-3 pr-11' : 'p-5 pr-14';
+
+      return `
+        <div class="filter-fade ${dimmed} relative ${pad} rounded-2xl border border-zinc-100 border-l-4 ${u.ribbon} ${u.pastel} bg-opacity-40 shadow-[0_8px_32px_rgba(0,0,0,0.02)]">
+          <p class="text-[14px] font-bold text-zinc-900 tracking-tight leading-snug truncate">${escapeHtml(label)}</p>
+          <p class="text-[11px] text-zinc-500 font-medium mt-1">${timeStr}</p>
+          <span class="absolute right-2.5 top-2.5 w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold ${u.avatar}">${u.initial}</span>
+        </div>`;
+    }
+
+    async function fetchCalendarData() {
+      const dot = document.getElementById('status-dot');
+      if (!ICLOUD_URL || ICLOUD_URL === 'YOUR_HTTPS_ICLOUD_LINK_HERE') {
+        updateLastSynced(null, 'Set ICLOUD_URL to sync');
+        if (dot) { dot.className = 'w-2 h-2 rounded-full bg-amber-400 status-pulse'; }
+        return;
+      }
+      try {
+        const response = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(ICLOUD_URL));
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        events = parseICalEvents(await response.text());
+        updateLastSynced(new Date());
+        if (dot) { dot.className = 'w-2 h-2 rounded-full bg-emerald-400 status-pulse'; }
+        renderCurrentView();
+      } catch (err) {
+        console.error('Calendar sync failed:', err);
+        updateLastSynced(null, 'Sync failed');
+        if (dot) { dot.className = 'w-2 h-2 rounded-full bg-red-400 status-pulse'; }
+      }
+    }
+
+    function updateLastSynced(date, overrideText) {
+      const el = document.getElementById('last-updated');
+      if (!el) return;
+      el.textContent = overrideText || (date
+        ? `Updated ${date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+        : 'Last updated —');
+    }
+
+    function updateMainHeader(eyebrow, title, titleClickable = false) {
+      document.getElementById('header-eyebrow').textContent = eyebrow;
+      document.getElementById('header-title').textContent = title;
+      const wrap = document.getElementById('btn-month-header');
+      wrap.classList.toggle('group', titleClickable);
+      wrap.classList.toggle('pointer-events-none', !titleClickable);
+    }
+
+    function startClock() {
+      const clockEl = document.getElementById('ios-clock');
+      function update() {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        clockEl.innerHTML = `${hours}<span class="clock-colon mx-0.5">:</span>${minutes}`;
+      }
+      update();
+      setInterval(update, 1000);
+    }
+
+    function startSyncLoop() {
+      fetchCalendarData();
+      if (syncTimer) clearInterval(syncTimer);
+      syncTimer = setInterval(fetchCalendarData, SYNC_INTERVAL_MS);
+    }
+
+    function scheduleMidnightRollover() {
+      if (midnightTimer) clearTimeout(midnightTimer);
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 1, 0);
+      midnightTimer = setTimeout(() => {
+        if (!state.anchoredFromMonth) state.weekStartDate = startOfDay(new Date());
+        state.selectedDate = startOfDay(new Date());
+        renderCurrentView();
+        scheduleMidnightRollover();
+      }, tomorrow - new Date());
+    }
+
+    function showView(name) {
+      state.view = name;
+      document.querySelectorAll('.view-panel').forEach(el => {
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+      });
+      const target = document.getElementById(`view-${name}`);
+      if (target) {
+        target.classList.remove('hidden');
+        target.classList.add('flex');
+      }
+      renderCurrentView();
+    }
+
+    function renderCurrentView() {
+      if (state.view === 'week') renderWeekView();
+      else if (state.view === 'day') renderDayView();
+      else if (state.view === 'month') renderMonthView();
+      renderNavigation();
+      renderFamilyFilters();
+    }
+
+    function renderNavigation() {
+      const activeClass = 'bg-zinc-900 text-white shadow-sm';
+      const inactiveClass = 'text-zinc-400 hover:text-zinc-800';
+
+      document.querySelectorAll('.nav-btn, .nav-btn-mobile').forEach(btn => {
+        const isActive = btn.dataset.nav === state.view;
+        btn.className = btn.className
+          .replace(/bg-zinc-900|text-white|shadow-sm/g, '')
+          .replace(/text-zinc-400|hover:text-zinc-800/g, '');
+        const base = btn.classList.contains('nav-btn-mobile')
+          ? 'nav-btn-mobile touch-target p-3 rounded-2xl transition-colors'
+          : 'nav-btn touch-target p-3 rounded-2xl transition-colors';
+        btn.className = `${base} ${isActive ? activeClass : inactiveClass}`;
+      });
+    }
+
+    function familyPillHTML(user, size = 'md') {
+      const active = state.filteredUser === user.id;
+      const dim = size === 'sm' ? 'w-9 h-9 text-[11px]' : 'w-10 h-10 text-[12px]';
+      return `
+        <button type="button" data-user-filter="${user.id}" title="${user.name}"
+          class="touch-target ${dim} rounded-full flex items-center justify-center font-bold ${user.avatar}
+            border border-zinc-100 shadow-[0_8px_32px_rgba(0,0,0,0.02)] transition-all
+            ${active ? `ring-2 ring-offset-2 ${user.ring} scale-105` : 'opacity-80 hover:opacity-100 hover:scale-105'}">
+          ${user.initial}
+        </button>`;
+    }
+
+    function renderFamilyFilters() {
+      const rail = document.getElementById('family-rail');
+      if (rail) {
+        rail.innerHTML = USERS.map(u => familyPillHTML(u)).join('');
+        bindUserFilters(rail);
+      }
+      const mobile = document.getElementById('family-mobile');
+      if (mobile) {
+        mobile.innerHTML = USERS.map(u => familyPillHTML(u, 'sm')).join('');
+        bindUserFilters(mobile);
+      }
+    }
+
+    function bindUserFilters(container) {
+      container.querySelectorAll('[data-user-filter]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.userFilter;
+          state.filteredUser = state.filteredUser === id ? null : id;
+          renderCurrentView();
+        });
+      });
+    }
+
+    function clearFilters() {
+      state.filteredUser = null;
+      state.anchoredFromMonth = false;
+      state.weekStartDate = startOfDay(new Date());
+      renderCurrentView();
+    }
+
+    function resetDashboard() {
+      const hub = document.getElementById('system-hub-dot');
+      if (hub) {
+        hub.classList.remove('hub-tap-flash');
+        void hub.offsetWidth;
+        hub.classList.add('hub-tap-flash');
+        setTimeout(() => hub.classList.remove('hub-tap-flash'), 200);
+      }
+
+      state.filteredUser = null;
+      state.anchoredFromMonth = false;
+      state.weekStartDate = startOfDay(new Date());
+      state.selectedDate = startOfDay(new Date());
+      showView('week');
+    }
+
+    function renderWeekView() {
+      const days = getRollingDays(state.weekStartDate);
+      const today = new Date();
+      updateMainHeader('Week', MONTH_NAMES[days[0].getMonth()], true);
+
+      document.getElementById('week-columns').innerHTML = days.map(day => {
+        const isToday = isSameDay(day, today);
+        const dayEvents = getEventsForDay(day);
+
+        return `
+          <div class="flex flex-col min-h-0 min-w-0">
+            <div class="shrink-0 px-3 pt-5 pb-4 text-center">
+              <button type="button" data-day-link="${dateKey(day)}" class="inline-block">
+                ${isToday
+                  ? `<span class="inline-block bg-zinc-900 text-white px-4 py-2.5 rounded-xl font-bold shadow-sm">
+                       <span class="block text-[10px] font-medium text-white/60 tracking-wide">${DAY_SHORT[day.getDay()]}</span>
+                       <span class="block text-[15px] tracking-tight">${day.getDate()}</span>
+                     </span>`
+                  : `<span class="inline-block px-2 py-1">
+                       <span class="block text-[10px] font-medium text-zinc-400 tracking-wide">${DAY_SHORT[day.getDay()]}</span>
+                       <span class="block text-[15px] font-bold text-zinc-900 tracking-tight">${day.getDate()}</span>
+                     </span>`}
+              </button>
+            </div>
+            <div class="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-3 pb-6 space-y-2.5">
+              ${dayEvents.length
+                ? dayEvents.map(e => ticketHTML(e)).join('')
+                : '<p class="text-center text-[11px] text-zinc-300 font-medium py-12">—</p>'}
+            </div>
+          </div>`;
+      }).join('');
+
+      bindDayLinks(document.getElementById('week-columns'));
+    }
+
     function bindDayLinks(container) {
       container.querySelectorAll('[data-day-link]').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -643,74 +518,52 @@
       });
     }
 
-    /* ─── VIEW 2: Daily Timeline ─── */
     function renderDayView() {
       const day = state.selectedDate;
-      document.getElementById('day-name-label').textContent = DAY_NAMES[day.getDay()];
-      document.getElementById('day-date-sub').textContent =
-        `${MONTH_NAMES[day.getMonth()]} ${day.getDate()}, ${day.getFullYear()}`;
-
-      const strips = ['day-user-strip', 'day-user-strip-mobile'];
-      strips.forEach(id => {
-        const el = document.getElementById(id);
-        el.innerHTML = USERS.map(u => userBadgeHTML(u, { active: state.filteredUser === u.id, compact: id.includes('mobile') })).join('');
-        bindUserFilterButtons(el);
-      });
+      updateMainHeader(
+        'Schedule',
+        `${DAY_NAMES[day.getDay()]}, ${MONTH_NAMES[day.getMonth()]} ${day.getDate()}`,
+        false
+      );
 
       const timeline = document.getElementById('day-timeline');
       const dayEvents = getEventsForDay(day);
 
-      if (dayEvents.length === 0) {
+      if (!dayEvents.length) {
         timeline.innerHTML = `
-          <div class="flex flex-col items-center justify-center py-20 text-zinc-400">
-            <svg class="w-16 h-16 mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <p class="text-lg font-medium">No events scheduled</p>
+          <div class="flex flex-col items-center justify-center py-28 text-zinc-300">
+            <p class="text-[15px] font-medium">No events scheduled</p>
           </div>`;
         return;
       }
 
-      timeline.innerHTML = dayEvents.map(e => {
+      timeline.innerHTML = dayEvents.map((e, i) => {
+        const dimmed = isEventDimmed(e) ? 'is-dimmed' : '';
         const user = e.user;
-        const uStyle = user
-          ? `${user.bg} ${user.border} ${user.text}`
-          : 'bg-white border-zinc-200 text-zinc-700';
+        const u = user || { pastel: 'bg-zinc-100', ribbon: 'border-l-zinc-300', avatar: 'bg-zinc-100 text-zinc-500', initial: '?' };
         const timeStr = e.allDay ? 'All day' : formatTimeReadable(e.start);
         const label = stripUserPrefix(e.summary);
+
         return `
-          <div class="rounded-2xl border shadow-sm p-5 sm:p-6 ${uStyle} transition-all elevate-hover stagger-item">
-            <p class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">
-              <span class="text-zinc-500 font-semibold text-xl sm:text-2xl md:text-3xl mr-2">${timeStr}</span>
-              ${escapeHtml(label)}
-            </p>
-            ${user ? `<p class="mt-2 text-sm font-semibold opacity-70">${user.name}</p>` : ''}
+          <div class="filter-fade rise-in ${dimmed} relative p-5 pr-14 rounded-3xl border border-zinc-100 border-l-4 ${u.ribbon} ${u.pastel} bg-opacity-40 shadow-[0_8px_32px_rgba(0,0,0,0.02)]" style="animation-delay:${Math.min(i * 45, 270)}ms">
+            <p class="text-[16px] font-bold text-zinc-900 tracking-tight leading-snug">${escapeHtml(label)}</p>
+            <p class="text-[12px] text-zinc-500 font-medium mt-1.5">${timeStr}${user ? ` · ${user.name}` : ''}</p>
+            <span class="absolute right-4 top-4 w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold ${u.avatar}">${u.initial}</span>
           </div>`;
       }).join('');
-
-      applyStagger('#day-timeline', '.stagger-item');
     }
 
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
-    }
-
-    /* ─── VIEW 3: Monthly Grid ─── */
     function renderMonthView() {
-      renderMonthRibbon();
-      renderMonthGrid();
-    }
+      updateMainHeader('Overview', 'Month', false);
 
-    function renderMonthRibbon() {
       const ribbon = document.getElementById('month-ribbon');
       ribbon.innerHTML = MONTH_SHORT.map((label, i) => {
-        const isActive = state.selectedMonth === i;
-        const display = label.length > 1 ? label : label;
+        const active = state.selectedMonth === i;
         return `
           <button type="button" data-month="${i}"
-            class="touch-target flex-shrink-0 px-3 sm:px-4 py-2.5 rounded-xl text-sm sm:text-base font-semibold transition-all active:scale-[0.97]
-              ${isActive ? 'bg-zinc-900 text-white shadow-md' : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 shadow-sm'}">
-            ${display}
+            class="touch-target shrink-0 px-4 py-2 rounded-2xl text-[13px] font-semibold tracking-tight transition-all
+              ${active ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-700'}">
+            ${label}
           </button>`;
       }).join('');
 
@@ -720,65 +573,55 @@
           renderMonthView();
         });
       });
-    }
 
-    function weekButtonHTML(weekNum) {
-      return `
-        <button type="button" data-week="${weekNum}"
-          class="month-week-btn touch-target px-1.5 py-2 sm:px-2.5 sm:py-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-[10px] sm:text-xs font-bold text-zinc-700 hover:shadow-md active:scale-[0.97] transition-all whitespace-nowrap">
-          Week ${weekNum}
-        </button>`;
+      renderMonthGrid();
     }
 
     function navigateToWeekFromMonth(weekNum) {
-      const year = state.selectedYear;
-      const month = state.selectedMonth;
-      const firstOfMonth = new Date(year, month, 1);
-      const firstMonday = getMondayOfWeek(firstOfMonth);
-      if (firstMonday.getMonth() > month || (firstMonday.getDate() > 1 && firstMonday.getMonth() === month)) {
-        // firstMonday might be in previous month — that's correct for grid row 1
-      }
-      const weekStart = addDays(firstMonday, (weekNum - 1) * 7);
-      state.weekStartDate = weekStart;
+      const firstMonday = getMondayOfWeek(new Date(state.selectedYear, state.selectedMonth, 1));
+      state.weekStartDate = addDays(firstMonday, (weekNum - 1) * 7);
       state.anchoredFromMonth = true;
       showView('week');
     }
 
     function renderMonthGrid() {
       const grid = document.getElementById('month-grid');
-      const year = state.selectedYear;
       const month = state.selectedMonth;
-      const firstDay = new Date(year, month, 1);
-      const startMonday = getMondayOfWeek(firstDay);
+      const year = state.selectedYear;
+      const startMonday = getMondayOfWeek(new Date(year, month, 1));
       const dayHeaders = ['M', 'T', 'W', 'Th', 'F', 'S', 'S'];
 
       const cells = ['<div aria-hidden="true"></div>'];
-      dayHeaders.forEach(label => {
-        cells.push(`<div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">${label}</div>`);
+      dayHeaders.forEach(h => {
+        cells.push(`<div class="text-center text-[11px] font-semibold text-zinc-400 tracking-[0.12em] py-2">${h}</div>`);
       });
 
       let cursor = new Date(startMonday);
 
       for (let row = 0; row < 5; row++) {
-        cells.push(weekButtonHTML(row + 1));
+        cells.push(`
+          <button type="button" data-week="${row + 1}"
+            class="self-center w-full px-2 py-2.5 rounded-2xl bg-white border border-zinc-100 text-[11px] font-semibold text-zinc-500 shadow-[0_8px_32px_rgba(0,0,0,0.02)] hover:bg-zinc-50 active:scale-[0.98] transition-all whitespace-nowrap">
+            Week ${row + 1}
+          </button>`);
 
         for (let col = 0; col < 7; col++) {
           const inMonth = cursor.getMonth() === month;
           const dayEvents = inMonth ? getEventsForDay(cursor) : [];
-          const indicators = dayEvents.slice(0, 4).map(e => {
-            const dot = e.user ? e.user.dot : 'bg-zinc-300';
-            return `<div class="h-1 rounded-full ${dot} flex-1 min-w-[8px] max-w-[24px]"></div>`;
+          const dashes = dayEvents.slice(0, 6).map(e => {
+            const c = e.user ? e.user.dash : 'bg-zinc-300';
+            return `<span class="inline-block w-2 h-[3px] rounded-full ${c}"></span>`;
           }).join('');
 
           cells.push(`
             <button type="button" data-day-link="${dateKey(cursor)}" ${!inMonth ? 'disabled' : ''}
-              class="touch-target min-h-[3.5rem] sm:min-h-[5rem] p-2 rounded-xl transition-all text-left
+              class="touch-target min-h-[4rem] sm:min-h-[5rem] p-3 rounded-2xl text-left transition-all
                 ${inMonth
-                  ? 'bg-white border border-zinc-200 shadow-sm hover:shadow-md active:scale-[0.97] cursor-pointer elevate-hover'
-                  : 'bg-transparent border border-transparent opacity-30 cursor-default'}
-                ${isSameDay(cursor, new Date()) && inMonth ? 'ring-2 ring-zinc-900 ring-offset-1' : ''}">
-              <span class="text-sm sm:text-base font-bold ${inMonth ? 'text-zinc-800' : 'text-zinc-400'}">${cursor.getDate()}</span>
-              ${inMonth && indicators ? `<div class="flex gap-0.5 mt-1.5 flex-wrap">${indicators}</div>` : ''}
+                  ? 'bg-white border border-zinc-100 shadow-[0_8px_32px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.04)] active:scale-[0.98]'
+                  : 'opacity-20 cursor-default'}
+                ${isSameDay(cursor, new Date()) && inMonth ? 'ring-2 ring-zinc-900 ring-offset-2' : ''}">
+              <span class="text-[15px] font-bold tracking-tight ${inMonth ? 'text-zinc-900' : 'text-zinc-400'}">${cursor.getDate()}</span>
+              ${inMonth && dashes ? `<div class="flex gap-1 mt-2.5">${dashes}</div>` : ''}
             </button>`);
           cursor = addDays(cursor, 1);
         }
@@ -787,24 +630,11 @@
       grid.innerHTML = cells.join('');
 
       grid.querySelectorAll('[data-week]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          navigateToWeekFromMonth(parseInt(btn.dataset.week, 10));
-        });
+        btn.addEventListener('click', () => navigateToWeekFromMonth(parseInt(btn.dataset.week, 10)));
       });
       bindDayLinks(grid);
-      applyStagger('#month-grid', 'button[data-day-link]');
     }
 
-    function applyStagger(containerSelector, itemSelector) {
-      const container = document.querySelector(containerSelector);
-      if (!container) return;
-      const items = container.querySelectorAll(itemSelector);
-      items.forEach((item, idx) => {
-        item.style.animationDelay = `${Math.min(idx * 35, 280)}ms`;
-      });
-    }
-
-    /* ─── Demo data for preview without iCloud URL ─── */
     function loadDemoEvents() {
       const today = startOfDay(new Date());
       const demos = [
@@ -823,20 +653,19 @@
       events = demos.map(d => {
         const start = addDays(today, d.dayOffset);
         start.setHours(d.hour, d.min, 0, 0);
-        const end = new Date(start.getTime() + 3600000);
-        const user = USERS.find(u => u.id === d.user);
-        return { summary: d.title, start, end, user, allDay: false };
+        return {
+          summary: d.title,
+          start,
+          end: new Date(start.getTime() + 3600000),
+          user: USERS.find(u => u.id === d.user),
+          allDay: false,
+        };
       });
-      updateLastSynced(new Date(), 'Demo data loaded');
+      updateLastSynced(new Date(), 'Demo data');
       renderCurrentView();
     }
 
-    /* ─── Event bindings ─── */
     function initEventListeners() {
-      document.querySelectorAll('[data-sidebar-toggle]').forEach(btn => {
-        btn.addEventListener('click', toggleSidebar);
-      });
-
       document.querySelectorAll('[data-nav]').forEach(btn => {
         btn.addEventListener('click', () => {
           const target = btn.dataset.nav;
@@ -849,51 +678,26 @@
             state.weekStartDate = startOfDay(new Date());
           }
           showView(target);
-          maybeCloseSidebarOnMobile();
         });
       });
 
-      document.getElementById('btn-sidebar-clear').addEventListener('click', () => {
-        clearFilters();
-        maybeCloseSidebarOnMobile();
-      });
-
-      document.getElementById('btn-sidebar-sync').addEventListener('click', () => {
-        fetchCalendarData();
-        maybeCloseSidebarOnMobile();
-      });
-
-      window.addEventListener('resize', () => {
-        if (window.innerWidth >= 640) {
-          document.body.classList.remove('overflow-hidden');
-        }
-      });
-
+      document.getElementById('btn-sync').addEventListener('click', fetchCalendarData);
+      document.getElementById('btn-sync-mobile').addEventListener('click', fetchCalendarData);
       document.getElementById('btn-month-header').addEventListener('click', () => {
+        if (state.view !== 'week') return;
         state.selectedMonth = state.selectedDate.getMonth();
         state.selectedYear = state.selectedDate.getFullYear();
         showView('month');
       });
-
-      document.getElementById('btn-back-week').addEventListener('click', () => {
-        state.filteredUser = null;
-        showView('week');
-      });
-
+      document.getElementById('btn-back-week').addEventListener('click', () => showView('week'));
       document.getElementById('btn-clear-filters').addEventListener('click', clearFilters);
-      document.getElementById('btn-month-clear-filters').addEventListener('click', clearFilters);
     }
 
-    /* ─── Bootstrap ─── */
     function init() {
       initEventListeners();
-      setSidebarOpen(false);
+      startClock();
       showView('week');
-
-      if (!ICLOUD_URL || ICLOUD_URL === 'YOUR_HTTPS_ICLOUD_LINK_HERE') {
-        loadDemoEvents();
-      }
-
+      if (!ICLOUD_URL || ICLOUD_URL === 'YOUR_HTTPS_ICLOUD_LINK_HERE') loadDemoEvents();
       startSyncLoop();
       scheduleMidnightRollover();
     }
