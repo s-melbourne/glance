@@ -27,7 +27,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
           action: "upload"
           ###### OFFICIAL MICROSOFT CONFIGURATION FOR PURE HTML ######
-          app_location: "/"
+          app_location: "public"
           skip_app_build: true
           output_location: ""
           api_location: "api"
