@@ -97,6 +97,14 @@
       50% { opacity: 0.4; }
     }
     .sync-pulse { animation: pulse-dot 2s ease-in-out infinite; }
+    .month-grid-8 {
+      display: grid;
+      grid-template-columns: minmax(3.25rem, 4.5rem) repeat(7, minmax(0, 1fr));
+    }
+    .month-week-btn {
+      align-self: center;
+      justify-self: stretch;
+    }
   </style>
 </head>
 <body class="text-zinc-700 font-sans antialiased min-h-screen overflow-x-hidden">
@@ -246,54 +254,28 @@
   <!-- ═══════════════════════════════════════════════════════════════
        VIEW 3 — MACRO MONTHLY GRID
        ═══════════════════════════════════════════════════════════════ -->
-  <div id="view-month" class="view-container hidden min-h-screen flex max-w-[1400px] mx-auto w-full">
-    <!-- Week number buttons (left margin) -->
-    <aside id="month-week-strip" class="hidden md:flex flex-col gap-2 p-3 border-r border-zinc-200 bg-white/80 shrink-0"></aside>
-
-    <div class="flex-1 flex flex-col min-w-0">
-      <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
-        <div class="flex items-center justify-between gap-3 mb-4">
-          <div class="flex items-center gap-3 min-w-0">
-            <button type="button" data-sidebar-toggle
-              class="touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all"
-              aria-label="Open menu">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-            </button>
-            <h1 class="text-2xl sm:text-3xl font-display font-bold text-zinc-900">Calendar</h1>
-          </div>
-          <button id="btn-month-clear-filters" type="button"
-            class="touch-target px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-white border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all elevate-hover">
-            Clear Filters
+  <div id="view-month" class="view-container hidden min-h-screen flex flex-col max-w-[1400px] mx-auto w-full">
+    <header class="sticky top-0 z-30 glass-panel border-b border-zinc-200 px-4 sm:px-6 py-4">
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <div class="flex items-center gap-3 min-w-0">
+          <button type="button" data-sidebar-toggle
+            class="touch-target shrink-0 p-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:bg-zinc-50 active:scale-95 transition-all"
+            aria-label="Open menu">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
+          <h1 class="text-2xl sm:text-3xl font-display font-bold text-zinc-900">Calendar</h1>
         </div>
-        <!-- Month ribbon -->
-        <div id="month-ribbon" class="flex gap-1 sm:gap-2 overflow-x-auto pb-1"></div>
-        <!-- Mobile week buttons -->
-        <div id="month-week-strip-mobile" class="flex md:hidden gap-2 mt-3 overflow-x-auto pb-1"></div>
-      </header>
-
-      <div class="flex flex-1 min-h-0">
-        <!-- User filter strip -->
-        <aside id="month-user-strip" class="hidden sm:flex flex-col gap-2 p-3 border-r border-zinc-200 bg-white/80 shrink-0"></aside>
-
-        <main class="flex-1 p-3 sm:p-6 overflow-auto">
-          <!-- Day-of-week headers -->
-          <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
-            <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">M</div>
-            <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">T</div>
-            <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">W</div>
-            <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">Th</div>
-            <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">F</div>
-            <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">S</div>
-            <div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">S</div>
-          </div>
-          <div id="month-grid" class="grid grid-cols-7 gap-1 sm:gap-2"></div>
-        </main>
+        <button id="btn-month-clear-filters" type="button"
+          class="touch-target px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-white border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all elevate-hover">
+          Clear Filters
+        </button>
       </div>
+      <div id="month-ribbon" class="flex gap-1 sm:gap-2 overflow-x-auto pb-1"></div>
+    </header>
 
-      <!-- Mobile user filters -->
-      <div id="month-user-strip-mobile" class="flex sm:hidden gap-2 px-4 py-3 border-t border-zinc-200 overflow-x-auto"></div>
-    </div>
+    <main class="flex-1 p-3 sm:p-6 overflow-auto">
+      <div id="month-grid" class="month-grid-8 gap-1 sm:gap-2 min-w-[640px]"></div>
+    </main>
   </div>
 
     </div><!-- /main-content -->
@@ -716,8 +698,6 @@
     /* ─── VIEW 3: Monthly Grid ─── */
     function renderMonthView() {
       renderMonthRibbon();
-      renderWeekStrips();
-      renderUserStrips();
       renderMonthGrid();
     }
 
@@ -742,23 +722,12 @@
       });
     }
 
-    function renderWeekStrips() {
-      const weekBtn = (n) => `
-        <button type="button" data-week="${n}"
-          class="touch-target px-4 py-3 rounded-xl bg-white border border-zinc-200 shadow-sm text-sm font-bold text-zinc-700 hover:shadow-md active:scale-[0.97] transition-all whitespace-nowrap">
-          Week ${n}
+    function weekButtonHTML(weekNum) {
+      return `
+        <button type="button" data-week="${weekNum}"
+          class="month-week-btn touch-target px-1.5 py-2 sm:px-2.5 sm:py-2.5 rounded-xl bg-white border border-zinc-200 shadow-sm text-[10px] sm:text-xs font-bold text-zinc-700 hover:shadow-md active:scale-[0.97] transition-all whitespace-nowrap">
+          Week ${weekNum}
         </button>`;
-
-      ['month-week-strip', 'month-week-strip-mobile'].forEach(id => {
-        const el = document.getElementById(id);
-        el.innerHTML = [1, 2, 3, 4, 5].map(weekBtn).join('');
-        el.querySelectorAll('[data-week]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const weekNum = parseInt(btn.dataset.week, 10);
-            navigateToWeekFromMonth(weekNum);
-          });
-        });
-      });
     }
 
     function navigateToWeekFromMonth(weekNum) {
@@ -775,26 +744,24 @@
       showView('week');
     }
 
-    function renderUserStrips() {
-      ['month-user-strip', 'month-user-strip-mobile'].forEach(id => {
-        const el = document.getElementById(id);
-        el.innerHTML = USERS.map(u => userBadgeHTML(u, { active: state.filteredUser === u.id, compact: id.includes('mobile') })).join('');
-        bindUserFilterButtons(el);
-      });
-    }
-
     function renderMonthGrid() {
       const grid = document.getElementById('month-grid');
       const year = state.selectedYear;
       const month = state.selectedMonth;
       const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
       const startMonday = getMondayOfWeek(firstDay);
+      const dayHeaders = ['M', 'T', 'W', 'Th', 'F', 'S', 'S'];
 
-      const cells = [];
+      const cells = ['<div aria-hidden="true"></div>'];
+      dayHeaders.forEach(label => {
+        cells.push(`<div class="text-center text-xs sm:text-sm font-semibold text-zinc-500 py-2">${label}</div>`);
+      });
+
       let cursor = new Date(startMonday);
 
       for (let row = 0; row < 5; row++) {
+        cells.push(weekButtonHTML(row + 1));
+
         for (let col = 0; col < 7; col++) {
           const inMonth = cursor.getMonth() === month;
           const dayEvents = inMonth ? getEventsForDay(cursor) : [];
@@ -818,8 +785,14 @@
       }
 
       grid.innerHTML = cells.join('');
+
+      grid.querySelectorAll('[data-week]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          navigateToWeekFromMonth(parseInt(btn.dataset.week, 10));
+        });
+      });
       bindDayLinks(grid);
-      applyStagger('#month-grid', 'button');
+      applyStagger('#month-grid', 'button[data-day-link]');
     }
 
     function applyStagger(containerSelector, itemSelector) {

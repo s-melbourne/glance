@@ -1,2 +1,20 @@
+# Dependencies
 node_modules/
+
+# Environment & secrets
 .env
+.env.*
+api/local.settings.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Azure Functions
+api/bin/
+api/obj/
+.local/
+
+# Logs
+*.log
+npm-debug.log*
