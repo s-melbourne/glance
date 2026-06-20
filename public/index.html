@@ -288,8 +288,11 @@
 
     async function getAuthHeaders() {
       if (!firebaseAuth?.currentUser) return {};
-      const token = await firebaseAuth.currentUser.getIdToken();
-      return { Authorization: `Bearer ${token}` };
+      const token = await firebaseAuth.currentUser.getIdToken(true);
+      return {
+        Authorization: `Bearer ${token}`,
+        'X-Firebase-Token': token,
+      };
     }
 
     async function initFirebaseAuth() {
@@ -320,7 +323,8 @@
       showLoginError('');
       try {
         const provider = new firebase.auth.GoogleAuthProvider();
-        await firebaseAuth.signInWithPopup(provider);
+        // Redirect avoids Cross-Origin-Opener-Policy popup issues on Azure SWA.
+        await firebaseAuth.signInWithRedirect(provider);
       } catch (err) {
         showLoginError(err.message || 'Google sign-in failed.');
       }
@@ -640,12 +644,27 @@
         const headers = await getAuthHeaders();
         const response = await fetch(`${API_BASE}/calendar`, { headers });
         if (response.status === 401 || response.status === 403) {
+          let detail = null;
+          try { detail = await response.json(); } catch { /* ignore */ }
           showLoginScreen();
           setDot('bg-amber-400');
-          updateLastSynced(null, response.status === 403 ? 'Access denied' : 'Sign in required');
-          return { authRequired: true };
+          if (detail?.code === 'auth_config_error') {
+            updateLastSynced(null, 'Auth misconfigured on server');
+          } else if (response.status === 403) {
+            updateLastSynced(null, 'Access denied');
+          } else {
+            updateLastSynced(null, 'Sign in required');
+          }
+          return { authRequired: true, detail };
         }
         if (response.status === 503) {
+          let detail = null;
+          try { detail = await response.json(); } catch { /* ignore */ }
+          if (detail?.code === 'auth_config_error') {
+            updateLastSynced(null, 'Auth misconfigured on server');
+            setDot('bg-red-400');
+            return { authRequired: true, detail };
+          }
           updateLastSynced(null, 'Calendar not configured');
           setDot('bg-amber-400');
           setDemoBanner(false);
@@ -1081,6 +1100,12 @@
 
       await initFirebaseAuth();
       if (firebaseReady) {
+        try {
+          const redirectResult = await firebaseAuth.getRedirectResult();
+          if (redirectResult?.user) bootstrapApp(redirectResult.user);
+        } catch (err) {
+          showLoginError(err.message || 'Sign-in redirect failed.');
+        }
         firebaseAuth.onAuthStateChanged(user => {
           if (user) bootstrapApp(user);
           else showLoginScreen();
