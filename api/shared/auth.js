@@ -48,7 +48,9 @@ function initFirebaseAdmin() {
 }
 
 function getBearerToken(request) {
-  const headerNames = ['authorization', 'Authorization', 'x-firebase-token', 'X-Firebase-Token'];
+  // SWA managed APIs replace Authorization with an internal proxy token (see
+  // https://github.com/Azure/static-web-apps/issues/34). Read our custom header first.
+  const headerNames = ['x-firebase-token', 'X-Firebase-Token', 'authorization', 'Authorization'];
   for (const name of headerNames) {
     const header = request.headers.get(name);
     if (!header) continue;

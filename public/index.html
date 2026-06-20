@@ -286,13 +286,12 @@
       }
     }
 
-    async function getAuthHeaders() {
-      if (!firebaseAuth?.currentUser) return {};
-      const token = await firebaseAuth.currentUser.getIdToken(true);
-      return {
-        Authorization: `Bearer ${token}`,
-        'X-Firebase-Token': token,
-      };
+    async function getAuthHeaders(user) {
+      const activeUser = user || firebaseAuth?.currentUser;
+      if (!activeUser) return {};
+      const token = await activeUser.getIdToken(true);
+      // SWA overwrites Authorization on /api/* — use a custom header (see api/shared/auth.js).
+      return { 'X-Firebase-Token': token };
     }
 
     async function initFirebaseAuth() {
@@ -360,7 +359,7 @@
       initEventListeners();
       startClock();
       showView('week');
-      fetchCalendarData().then(result => {
+      fetchCalendarData(user).then(result => {
         if (events.length === 0 && !result?.fromCache && !result?.authRequired) loadDemoEvents();
       });
       startSyncLoop();
@@ -632,7 +631,7 @@
         </div>`;
     }
 
-    async function fetchCalendarData() {
+    async function fetchCalendarData(authUserOverride) {
       if (isSyncing) return null;
       const dot = document.getElementById('status-dot');
       const setDot = color => {
@@ -641,7 +640,7 @@
 
       setSyncLoading(true);
       try {
-        const headers = await getAuthHeaders();
+        const headers = await getAuthHeaders(authUserOverride);
         const response = await fetch(`${API_BASE}/calendar`, { headers });
         if (response.status === 401 || response.status === 403) {
           let detail = null;
