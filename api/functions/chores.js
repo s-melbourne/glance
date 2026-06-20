@@ -74,7 +74,7 @@ app.http('choresGet', {
   authLevel: 'anonymous',
   route: 'chores',
   handler: async (request, context) => {
-    const auth = requireAuth(request);
+    const auth = await requireAuth(request);
     if (auth.error) return auth.error;
 
     const userId = request.query.get('userId');
@@ -123,7 +123,7 @@ app.http('choresPost', {
   authLevel: 'anonymous',
   route: 'chores',
   handler: async (request, context) => {
-    const auth = requireAuth(request);
+    const auth = await requireAuth(request);
     if (auth.error) return auth.error;
 
     let body;
@@ -185,7 +185,7 @@ app.http('choresPut', {
   authLevel: 'anonymous',
   route: 'chores/{id}',
   handler: async (request, context) => {
-    const auth = requireAuth(request);
+    const auth = await requireAuth(request);
     if (auth.error) return auth.error;
 
     const choreId = request.params.id;

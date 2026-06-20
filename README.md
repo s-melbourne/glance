@@ -6,7 +6,7 @@ Built as a static web app on **Azure Static Web Apps** with a **Node.js Azure Fu
 
 ## Features
 
-- **Sign-in** — Google and Apple SSO via Azure Static Web Apps (family email allowlist optional)
+- **Sign-in** — Google and Apple SSO via [Firebase Auth](https://firebase.google.com/products/auth) (free Spark plan; no inactivity pause)
 - **Shared calendar** — Server-side proxy fetches and parses an iCloud `.ics` feed; the private URL never reaches the browser
 - **Family lanes** — Events are assigned to members when the summary contains their name (e.g. `Anna: dentist`)
 - **Week / day / month views** — Touch-friendly layout with per-person filtering
@@ -135,35 +135,48 @@ Set these **application settings** in the Azure portal (or via CI/CD):
 |---------|---------|
 | `ICLOUD_CALENDAR_URL` | Private iCloud `.ics` subscription URL |
 | `COSMOS_CONNECTION_STRING` | Cosmos DB connection string |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID (SSO) |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
-| `APPLE_CLIENT_ID` | Apple Services ID (SSO) |
-| `APPLE_CLIENT_SECRET` | Apple Sign In client secret (JWT) |
+| `FIREBASE_API_KEY` | Firebase web API key (public; used by browser) |
+| `FIREBASE_AUTH_DOMAIN` | e.g. `your-project.firebaseapp.com` |
+| `FIREBASE_PROJECT_ID` | Firebase project ID |
+| `FIREBASE_APP_ID` | *(Optional)* Firebase web app ID |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Service account JSON (single line) for API token verification |
 | `GLANCE_ALLOWED_EMAILS` | *(Optional)* Comma-separated family emails allowed to sign in |
 
-### Authentication (Google & Apple SSO)
+### Authentication (Firebase — Google & Apple SSO)
 
-Glance uses [Azure Static Web Apps built-in authentication](https://learn.microsoft.com/azure/static-web-apps/authentication-authorization). The UI offers **Continue with Google** and **Continue with Apple**; all `/api/*` routes require a signed-in user.
+Glance uses **[Firebase Authentication](https://firebase.google.com/docs/auth)** on the free **Spark** plan. The browser signs in with Google or Apple; the API verifies Firebase ID tokens. This works on **Azure Static Web Apps Free tier** (no Standard SKU required).
 
-**1. Google**
+**1. Create a Firebase project**
 
-1. Create an OAuth client in [Google Cloud Console](https://console.cloud.google.com/) (Web application).
-2. Add authorized redirect URI: `https://<your-swa-hostname>.azurestaticapps.net/.auth/login/google/callback`
-3. In Azure Portal → Static Web App → **Settings → Authentication** → Add **Google**, or set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` as application settings (referenced by [`public/staticwebapp.config.json`](public/staticwebapp.config.json)).
+1. Go to [Firebase Console](https://console.firebase.google.com/) → **Add project** (Spark plan, no payment card required).
+2. **Build → Authentication → Sign-in method** → enable **Google** and **Apple**.
+3. **Project settings → General** → add a **Web app** → copy the `apiKey`, `authDomain`, `projectId`, and `appId`.
+4. **Authentication → Settings → Authorized domains** → add your SWA hostname (e.g. `your-app.azurestaticapps.net`) and `localhost` for local dev.
 
-**2. Apple**
+**2. Apple Sign In (in Firebase Console)**
 
-1. Register an App ID and Services ID in [Apple Developer](https://developer.apple.com/) with Sign in with Apple enabled.
-2. Configure return URL: `https://<your-swa-hostname>.azurestaticapps.net/.auth/login/apple/callback`
-3. Generate a client secret (JWT) and set `APPLE_CLIENT_ID` / `APPLE_CLIENT_SECRET` in application settings. Apple is wired as a custom OpenID Connect provider named `apple` in `staticwebapp.config.json`.
+Follow Firebase’s Apple provider setup: register your Services ID in Apple Developer, then paste Team ID, Key ID, private key, and Services ID into Firebase.
 
-**3. Family allowlist (recommended)**
+**3. Service account for the API**
 
-Set `GLANCE_ALLOWED_EMAILS` to your household Google/Apple emails (comma-separated). The API rejects sign-ins from other accounts with HTTP 403.
+1. **Project settings → Service accounts** → **Generate new private key**.
+2. Paste the entire JSON as a **single-line** value into Azure `FIREBASE_SERVICE_ACCOUNT_JSON`.
 
-**4. Local development**
+**4. Azure application settings**
 
-Run `swa start public --api-location api` so `/.auth/*` and `/api/*` behave like production. Set `GLANCE_AUTH_DISABLED=true` in `api/local.settings.json` to skip API auth checks when testing Functions in isolation.
+Set all `FIREBASE_*` variables above in Static Web App → **Environment variables**. The browser loads public config from `GET /api/config`; protected routes require a valid `Authorization: Bearer <token>` header.
+
+**5. Family allowlist (recommended)**
+
+Set `GLANCE_ALLOWED_EMAILS` to household emails (comma-separated). Other Google/Apple accounts receive HTTP 403.
+
+**6. Local development**
+
+```bash
+swa start public --api-location api
+```
+
+Set `GLANCE_AUTH_DISABLED=true` in `api/local.settings.json` to skip token verification when testing Functions alone. Use **View demo calendar** on the login screen to browse sample events without Firebase configured.
 
 ### Connect your iPhone calendar
 
@@ -182,6 +195,7 @@ The `midnightReset` timer function runs on the Functions host schedule (`1 0 0 *
 
 | Method | Route | Description |
 |--------|-------|-------------|
+| `GET` | `/api/config` | Public Firebase web SDK settings for sign-in |
 | `GET` | `/api/calendar` | Fetch and parse iCloud calendar events |
 | `GET` | `/api/chores?userId={id}` | List active chores (optional filter) |
 | `POST` | `/api/chores` | Create a chore |

@@ -6,6 +6,11 @@
     "ICLOUD_CALENDAR_URL": "https://your-icloud-calendar-subscription-url.ics",
     "COSMOS_CONNECTION_STRING": "AccountEndpoint=https://...;",
     "GLANCE_AUTH_DISABLED": "true",
-    "GLANCE_ALLOWED_EMAILS": "you@gmail.com,partner@gmail.com"
+    "GLANCE_ALLOWED_EMAILS": "you@gmail.com,partner@gmail.com",
+    "FIREBASE_API_KEY": "",
+    "FIREBASE_AUTH_DOMAIN": "your-project.firebaseapp.com",
+    "FIREBASE_PROJECT_ID": "your-project-id",
+    "FIREBASE_APP_ID": "",
+    "FIREBASE_SERVICE_ACCOUNT_JSON": ""
   }
 }

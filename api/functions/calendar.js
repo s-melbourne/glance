@@ -148,7 +148,7 @@ app.http('calendar', {
   authLevel: 'anonymous',
   route: 'calendar',
   handler: async (request, context) => {
-    const auth = requireAuth(request);
+    const auth = await requireAuth(request);
     if (auth.error) return auth.error;
 
     const calendarUrl = process.env.ICLOUD_CALENDAR_URL;

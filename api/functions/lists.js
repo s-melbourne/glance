@@ -41,7 +41,7 @@ app.http('listsGet', {
   authLevel: 'anonymous',
   route: 'lists',
   handler: async (request, context) => {
-    const auth = requireAuth(request);
+    const auth = await requireAuth(request);
     if (auth.error) return auth.error;
 
     const listType = request.query.get('listType');
@@ -88,7 +88,7 @@ app.http('listsPost', {
   authLevel: 'anonymous',
   route: 'lists',
   handler: async (request, context) => {
-    const auth = requireAuth(request);
+    const auth = await requireAuth(request);
     if (auth.error) return auth.error;
 
     let body;
@@ -176,7 +176,7 @@ app.http('listsPut', {
   authLevel: 'anonymous',
   route: 'lists/{id}',
   handler: async (request, context) => {
-    const auth = requireAuth(request);
+    const auth = await requireAuth(request);
     if (auth.error) return auth.error;
 
     const itemId = request.params.id;
@@ -250,7 +250,7 @@ app.http('listsDelete', {
   authLevel: 'anonymous',
   route: 'lists/{id}',
   handler: async (request, context) => {
-    const auth = requireAuth(request);
+    const auth = await requireAuth(request);
     if (auth.error) return auth.error;
 
     const itemId = request.params.id;

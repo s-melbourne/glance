@@ -11,6 +11,8 @@
   <meta name="format-detection" content="telephone=no">
   <title>Glance</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <style>
     html, body {
       height: 100%;
@@ -76,25 +78,31 @@
 </head>
 <body class="bg-white text-zinc-900 antialiased">
 
-  <!-- Sign-in gate (Google / Apple SSO via Azure Static Web Apps) -->
+  <!-- Sign-in gate (Google / Apple SSO via Firebase Auth — free tier) -->
   <div id="login-screen" class="is-visible fixed inset-0 z-[200] flex-col items-center justify-center bg-white safe-top safe-bottom safe-x px-6" role="main" aria-label="Sign in">
     <div class="w-full max-w-sm text-center">
       <div class="mx-auto mb-6 w-14 h-14 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-600 flex items-center justify-center shadow-lg">
         <span class="w-3 h-3 rounded-full bg-white status-pulse"></span>
       </div>
       <h1 class="text-3xl font-bold tracking-tight text-zinc-900 mb-2">Glance</h1>
-      <p class="text-sm text-zinc-500 mb-8 leading-relaxed">Family calendar planner. Sign in with your household account to sync your iPhone calendar.</p>
+      <p class="text-sm text-zinc-500 mb-4 leading-relaxed">Family calendar planner. Sign in with your household Google or Apple account.</p>
+      <p id="login-config-hint" class="hidden text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4">Firebase auth is not configured yet. Set FIREBASE_* variables in Azure, or use demo mode below.</p>
+      <p id="login-error" class="hidden text-xs text-red-600 mb-4" role="alert"></p>
       <div class="space-y-3">
-        <a href="/.auth/login/google?post_login_redirect_uri=/" id="btn-login-google"
-          class="touch-target flex items-center justify-center gap-3 w-full px-5 py-3.5 rounded-2xl bg-zinc-900 text-white text-sm font-semibold shadow-sm hover:bg-zinc-800 active:scale-[0.98] transition-all">
+        <button type="button" id="btn-login-google"
+          class="touch-target flex items-center justify-center gap-3 w-full px-5 py-3.5 rounded-2xl bg-zinc-900 text-white text-sm font-semibold shadow-sm hover:bg-zinc-800 active:scale-[0.98] transition-all disabled:opacity-40">
           <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
           Continue with Google
-        </a>
-        <a href="/.auth/login/apple?post_login_redirect_uri=/" id="btn-login-apple"
-          class="touch-target flex items-center justify-center gap-3 w-full px-5 py-3.5 rounded-2xl bg-white text-zinc-900 text-sm font-semibold border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all">
+        </button>
+        <button type="button" id="btn-login-apple"
+          class="touch-target flex items-center justify-center gap-3 w-full px-5 py-3.5 rounded-2xl bg-white text-zinc-900 text-sm font-semibold border border-zinc-200 shadow-sm hover:bg-zinc-50 active:scale-[0.98] transition-all disabled:opacity-40">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
           Continue with Apple
-        </a>
+        </button>
+        <button type="button" id="btn-login-demo"
+          class="touch-target w-full px-5 py-3 rounded-2xl text-sm font-medium text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50 transition-colors">
+          View demo calendar
+        </button>
       </div>
     </div>
   </div>
@@ -140,9 +148,9 @@
           <svg id="btn-sync-icon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         </button>
         <span id="status-dot" class="w-2 h-2 rounded-full bg-emerald-400 status-pulse" title="Operational"></span>
-        <a id="btn-logout" href="/.auth/logout" class="touch-target p-2 rounded-xl text-zinc-400 hover:text-zinc-800 transition-colors" aria-label="Sign out" title="Sign out">
+        <button type="button" id="btn-logout" class="touch-target p-2 rounded-xl text-zinc-400 hover:text-zinc-800 transition-colors" aria-label="Sign out" title="Sign out">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-        </a>
+        </button>
       </div>
     </nav>
 
@@ -248,6 +256,9 @@
     let isSyncing = false;
     let queryModalEventId = null;
     let authUser = null;
+    let firebaseAuth = null;
+    let firebaseReady = false;
+    let appBootstrapped = false;
     const eventRsvp = {};
 
     function escapeAttr(str) {
@@ -263,15 +274,102 @@
       return `evt-${start.getTime()}-${summary.replace(/\s+/g, '-').slice(0, 24)}`;
     }
 
-    async function fetchAuthUser() {
-      try {
-        const res = await fetch('/.auth/me', { credentials: 'include' });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data.clientPrincipal || null;
-      } catch {
-        return null;
+    function showLoginError(message) {
+      const el = document.getElementById('login-error');
+      if (!el) return;
+      if (message) {
+        el.textContent = message;
+        el.classList.remove('hidden');
+      } else {
+        el.textContent = '';
+        el.classList.add('hidden');
       }
+    }
+
+    async function getAuthHeaders() {
+      if (!firebaseAuth?.currentUser) return {};
+      const token = await firebaseAuth.currentUser.getIdToken();
+      return { Authorization: `Bearer ${token}` };
+    }
+
+    async function initFirebaseAuth() {
+      try {
+        const res = await fetch(`${API_BASE}/config`);
+        const data = await res.json();
+        if (!data.firebase?.apiKey) {
+          document.getElementById('login-config-hint')?.classList.remove('hidden');
+          document.getElementById('btn-login-google')?.setAttribute('disabled', 'disabled');
+          document.getElementById('btn-login-apple')?.setAttribute('disabled', 'disabled');
+          return false;
+        }
+
+        if (!firebase.apps.length) {
+          firebase.initializeApp(data.firebase);
+        }
+        firebaseAuth = firebase.auth();
+        firebaseReady = true;
+        return true;
+      } catch {
+        document.getElementById('login-config-hint')?.classList.remove('hidden');
+        return false;
+      }
+    }
+
+    async function signInWithGoogle() {
+      if (!firebaseReady) return;
+      showLoginError('');
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await firebaseAuth.signInWithPopup(provider);
+      } catch (err) {
+        showLoginError(err.message || 'Google sign-in failed.');
+      }
+    }
+
+    async function signInWithApple() {
+      if (!firebaseReady) return;
+      showLoginError('');
+      try {
+        const provider = new firebase.auth.OAuthProvider('apple.com');
+        provider.addScope('email');
+        provider.addScope('name');
+        await firebaseAuth.signInWithPopup(provider);
+      } catch (err) {
+        showLoginError(err.message || 'Apple sign-in failed.');
+      }
+    }
+
+    async function signOutUser() {
+      if (firebaseAuth) await firebaseAuth.signOut();
+      appBootstrapped = false;
+      if (syncTimer) clearInterval(syncTimer);
+      showLoginScreen();
+    }
+
+    function bootstrapApp(user) {
+      showApp({
+        userDetails: user.email || user.displayName || 'Signed in',
+        userId: user.uid,
+      });
+      if (appBootstrapped) return;
+      appBootstrapped = true;
+      initEventListeners();
+      startClock();
+      showView('week');
+      fetchCalendarData().then(result => {
+        if (events.length === 0 && !result?.fromCache && !result?.authRequired) loadDemoEvents();
+      });
+      startSyncLoop();
+      scheduleMidnightRollover();
+    }
+
+    function enterDemoMode() {
+      appBootstrapped = true;
+      initEventListeners();
+      startClock();
+      showApp({ userDetails: 'Demo mode', userId: 'demo' });
+      showView('week');
+      loadDemoEvents();
     }
 
     function showLoginScreen() {
@@ -539,7 +637,8 @@
 
       setSyncLoading(true);
       try {
-        const response = await fetch(`${API_BASE}/calendar`, { credentials: 'include' });
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${API_BASE}/calendar`, { headers });
         if (response.status === 401 || response.status === 403) {
           showLoginScreen();
           setDot('bg-amber-400');
@@ -972,23 +1071,24 @@
       });
       document.getElementById('btn-back-week').addEventListener('click', () => showView('week'));
       document.getElementById('btn-clear-filters')?.addEventListener('click', clearFilters);
+      document.getElementById('btn-logout')?.addEventListener('click', signOutUser);
     }
 
     async function init() {
-      const user = await fetchAuthUser();
-      if (!user) {
-        showLoginScreen();
+      document.getElementById('btn-login-google')?.addEventListener('click', signInWithGoogle);
+      document.getElementById('btn-login-apple')?.addEventListener('click', signInWithApple);
+      document.getElementById('btn-login-demo')?.addEventListener('click', enterDemoMode);
+
+      await initFirebaseAuth();
+      if (firebaseReady) {
+        firebaseAuth.onAuthStateChanged(user => {
+          if (user) bootstrapApp(user);
+          else showLoginScreen();
+        });
         return;
       }
 
-      showApp(user);
-      initEventListeners();
-      startClock();
-      showView('week');
-      const result = await fetchCalendarData();
-      if (events.length === 0 && !result?.fromCache && !result?.authRequired) loadDemoEvents();
-      startSyncLoop();
-      scheduleMidnightRollover();
+      showLoginScreen();
     }
 
     document.addEventListener('DOMContentLoaded', () => { init(); });
