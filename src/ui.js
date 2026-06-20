@@ -265,7 +265,7 @@ function renderWeekView() {
         ${days.map(day => {
           const dayEvents = getEventsForUserOnDay(user.id, day);
           const preview = dayEvents.slice(0, 3).map(e => `
-            <div class="truncate text-[10px] sm:text-xs font-medium ${user.text} leading-tight">${e.allDay ? 'All day' : formatTimeReadable(e.start)} ${stripUserPrefix(e.summary)}</div>
+            <div class="truncate text-[10px] sm:text-xs font-medium ${user.text} leading-tight">${e.allDay ? 'All day' : formatTimeReadable(e.start)} ${escapeHtml(stripUserPrefix(e.summary))}</div>
           `).join('');
           const more = dayEvents.length > 3 ? `<div class="text-[10px] text-zinc-400 font-medium">+${dayEvents.length - 3} more</div>` : '';
           return `

@@ -11,6 +11,7 @@
 
 const { app } = require('@azure/functions');
 const ICAL = require('ical.js');
+const { requireAuth } = require('../shared/auth');
 
 // ─── Allowed user IDs — must match USERS array in src/state.js ───────────────
 const VALID_USERS = new Set(['anna', 'simeon', 'tennille', 'bibi']);
@@ -147,6 +148,9 @@ app.http('calendar', {
   authLevel: 'anonymous',
   route: 'calendar',
   handler: async (request, context) => {
+    const auth = requireAuth(request);
+    if (auth.error) return auth.error;
+
     const calendarUrl = process.env.ICLOUD_CALENDAR_URL;
 
     if (!calendarUrl) {

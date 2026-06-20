@@ -1,20 +1,46 @@
 {
   "$schema": "https://json.schemastore.org/staticwebapp.config.json",
+  "auth": {
+    "identityProviders": {
+      "google": {
+        "registration": {
+          "clientIdSettingName": "GOOGLE_CLIENT_ID",
+          "clientSecretSettingName": "GOOGLE_CLIENT_SECRET"
+        }
+      },
+      "customOpenIdConnectProviders": {
+        "apple": {
+          "registration": {
+            "clientIdSettingName": "APPLE_CLIENT_ID",
+            "clientSecretSettingName": "APPLE_CLIENT_SECRET"
+          },
+          "login": {
+            "nameClaimType": "name",
+            "openidConfigurationUrl": "https://appleid.apple.com/.well-known/openid-configuration"
+          }
+        }
+      }
+    }
+  },
   "routes": [
     {
-      "route": "/",
-      "rewrite": "/index.html",
+      "route": "/.auth/*",
       "allowedRoles": ["anonymous"]
     },
     {
       "route": "/api/*",
-      "allowedRoles": ["anonymous"]
+      "allowedRoles": ["authenticated"]
+    },
+    {
+      "route": "/*",
+      "allowedRoles": ["anonymous", "authenticated"]
     }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": [
       "/api/*",
+      "/.auth/*",
       "*.js",
       "*.mjs",
       "*.css",
@@ -33,7 +59,7 @@
     "X-XSS-Protection": "1; mode=block",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
-    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://corsproxy.io; img-src 'self' data: blob:; object-src 'none'; base-uri 'self';"
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self';"
   },
   "mimeTypes": {
     ".json": "application/json",

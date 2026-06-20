@@ -12,6 +12,7 @@
 
 const { app } = require('@azure/functions');
 const { CosmosClient } = require('@azure/cosmos');
+const { requireAuth } = require('../shared/auth');
 
 // ─── Cosmos client (singleton) ────────────────────────────────────────────────
 let _container = null;
@@ -40,6 +41,9 @@ app.http('listsGet', {
   authLevel: 'anonymous',
   route: 'lists',
   handler: async (request, context) => {
+    const auth = requireAuth(request);
+    if (auth.error) return auth.error;
+
     const listType = request.query.get('listType');
 
     if (!listType || !VALID_LIST_TYPES.has(listType)) {
@@ -84,6 +88,9 @@ app.http('listsPost', {
   authLevel: 'anonymous',
   route: 'lists',
   handler: async (request, context) => {
+    const auth = requireAuth(request);
+    if (auth.error) return auth.error;
+
     let body;
     try {
       body = await request.json();
@@ -169,6 +176,9 @@ app.http('listsPut', {
   authLevel: 'anonymous',
   route: 'lists/{id}',
   handler: async (request, context) => {
+    const auth = requireAuth(request);
+    if (auth.error) return auth.error;
+
     const itemId = request.params.id;
 
     if (!itemId || !/^[\w-]+$/.test(itemId)) {
@@ -240,6 +250,9 @@ app.http('listsDelete', {
   authLevel: 'anonymous',
   route: 'lists/{id}',
   handler: async (request, context) => {
+    const auth = requireAuth(request);
+    if (auth.error) return auth.error;
+
     const itemId = request.params.id;
     const listType = request.query.get('listType');
 

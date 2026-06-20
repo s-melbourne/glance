@@ -11,6 +11,7 @@
 
 const { app } = require('@azure/functions');
 const { CosmosClient } = require('@azure/cosmos');
+const { requireAuth } = require('../shared/auth');
 
 // ─── Cosmos client (singleton re-used across warm invocations) ────────────────
 let _container = null;
@@ -73,6 +74,9 @@ app.http('choresGet', {
   authLevel: 'anonymous',
   route: 'chores',
   handler: async (request, context) => {
+    const auth = requireAuth(request);
+    if (auth.error) return auth.error;
+
     const userId = request.query.get('userId');
 
     let querySpec;
@@ -119,6 +123,9 @@ app.http('choresPost', {
   authLevel: 'anonymous',
   route: 'chores',
   handler: async (request, context) => {
+    const auth = requireAuth(request);
+    if (auth.error) return auth.error;
+
     let body;
     try {
       body = await request.json();
@@ -178,6 +185,9 @@ app.http('choresPut', {
   authLevel: 'anonymous',
   route: 'chores/{id}',
   handler: async (request, context) => {
+    const auth = requireAuth(request);
+    if (auth.error) return auth.error;
+
     const choreId = request.params.id;
 
     if (!choreId || !/^[\w-]+$/.test(choreId)) {
