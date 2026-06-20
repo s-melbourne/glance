@@ -360,7 +360,9 @@
       startClock();
       showView('week');
       fetchCalendarData(user).then(result => {
-        if (events.length === 0 && !result?.fromCache && !result?.authRequired) loadDemoEvents();
+        if (events.length === 0 && !result?.fromCache && !result?.authRequired && result?.configured !== false) {
+          loadDemoEvents();
+        }
       });
       startSyncLoop();
       scheduleMidnightRollover();
@@ -394,7 +396,24 @@
 
     function setDemoBanner(visible) {
       isDemoMode = visible;
-      document.getElementById('demo-banner')?.classList.toggle('is-visible', visible);
+      const banner = document.getElementById('demo-banner');
+      const span = banner?.querySelector('span');
+      if (span && visible) {
+        span.innerHTML = 'Demo mode — sample events only. Sign in and set <code class="font-mono text-[11px]">ICLOUD_CALENDAR_URL</code> in Azure to sync your iPhone calendar.';
+      }
+      banner?.classList.toggle('is-visible', visible);
+    }
+
+    function showCalendarSetupNotice(visible) {
+      const banner = document.getElementById('demo-banner');
+      const span = banner?.querySelector('span');
+      if (!banner || !span) return;
+      if (visible) {
+        span.innerHTML = 'Signed in — iPhone calendar not connected yet. Add <code class="font-mono text-[11px]">ICLOUD_CALENDAR_URL</code> in Azure Static Web App settings, then tap refresh.';
+        banner.classList.add('is-visible');
+      } else {
+        banner.classList.remove('is-visible');
+      }
     }
 
     function setSyncLoading(loading) {
@@ -666,7 +685,8 @@
           }
           updateLastSynced(null, 'Calendar not configured');
           setDot('bg-amber-400');
-          setDemoBanner(false);
+          showCalendarSetupNotice(true);
+          renderCurrentView();
           return { configured: false };
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -675,6 +695,7 @@
         events = ensureEventIds(normalizeApiEvents(payload.events));
         saveCalendarCache(events, payload.fetchedAt);
         setDemoBanner(false);
+        showCalendarSetupNotice(false);
         updateLastSynced(new Date());
         setDot('bg-emerald-400');
         renderCurrentView();
