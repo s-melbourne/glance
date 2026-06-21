@@ -262,7 +262,7 @@
     const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const SYNC_INTERVAL_MS = 15 * 60 * 1000;
+    const SYNC_INTERVAL_MS = 2 * 60 * 1000;
 
     let events = [];
     let state = {
@@ -276,6 +276,7 @@
     };
 
     let syncTimer = null;
+    let syncVisibilityBound = false;
     let clockTimer = null;
     let midnightTimer = null;
     let isDemoMode = false;
@@ -377,7 +378,7 @@
       if (firebaseAuth) await firebaseAuth.signOut();
       appBootstrapped = false;
       bootstrappedUid = null;
-      if (syncTimer) clearInterval(syncTimer);
+      stopSyncLoop();
       closeSettingsPanel();
       showLoginScreen();
     }
@@ -806,9 +807,37 @@
       clockTimer = setInterval(update, 1000);
     }
 
+    function stopSyncLoop() {
+      if (syncTimer) clearTimeout(syncTimer);
+      syncTimer = null;
+    }
+
+    function scheduleNextCalendarSync(delay = SYNC_INTERVAL_MS) {
+      stopSyncLoop();
+      syncTimer = setTimeout(async () => {
+        if (!appBootstrapped || !firebaseAuth?.currentUser) return;
+        await fetchCalendarData();
+        if (appBootstrapped && firebaseAuth?.currentUser) {
+          scheduleNextCalendarSync();
+        }
+      }, delay);
+    }
+
+    function onVisibilityCalendarSync() {
+      if (document.visibilityState !== 'visible') return;
+      if (!appBootstrapped || !firebaseAuth?.currentUser) return;
+      fetchCalendarData();
+    }
+
     function startSyncLoop() {
-      if (syncTimer) clearInterval(syncTimer);
-      syncTimer = setInterval(() => fetchCalendarData(), SYNC_INTERVAL_MS);
+      scheduleNextCalendarSync(SYNC_INTERVAL_MS);
+      if (!syncVisibilityBound) {
+        syncVisibilityBound = true;
+        document.addEventListener('visibilitychange', onVisibilityCalendarSync);
+        window.addEventListener('pageshow', e => {
+          if (e.persisted) onVisibilityCalendarSync();
+        });
+      }
     }
 
     function scheduleMidnightRollover() {

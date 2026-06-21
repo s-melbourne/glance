@@ -13,7 +13,7 @@ Built as a static web app on **Azure Static Web Apps** with a **Node.js Azure Fu
 - **Chores** — Daily, weekly, or one-off tasks with per-day completion tracking
 - **Lists** — Grocery, todo, and packing lists with optional quantities
 - **Offline resilience** — Last successful calendar sync is cached in the browser for offline viewing
-- **Auto-sync** — Calendar refreshes every 15 minutes; a midnight timer rolls the UI to the new day
+- **Auto-sync** — Calendar refreshes every 2 minutes (and when the tab becomes visible again); a midnight timer rolls the UI to the new day
 
 ## Architecture
 
@@ -187,7 +187,7 @@ Glance syncs through a **private iCloud calendar subscription URL**. The URL is 
 3. **Azure** — in your Static Web App → **Environment variables**, add `ICLOUD_CALENDAR_URL` with the full `https://…` URL.
 4. **Local dev** — add the same key to `api/local.settings.json` under `Values`, then run `swa start public --api-location api`.
 
-Events sync every 15 minutes. Tag titles with a family member name so Glance routes them to the right lane (see [Calendar event format](#calendar-event-format)).
+Events sync every 2 minutes while Glance is open. Tag titles with a family member name so Glance routes them to the right lane (see [Calendar event format](#calendar-event-format)).
 
 The `midnightReset` timer function runs on the Functions host schedule (`1 0 0 * * *`) and trims chore completion history older than 7 days.
 
