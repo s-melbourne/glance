@@ -2,9 +2,12 @@
   "name": "glance",
   "private": true,
   "scripts": {
-    "dev": "serve . -l 3000"
+    "dev": "serve public -l 3000",
+    "build:css": "tailwindcss -i ./src/tailwind.css -o ./public/styles.css --minify",
+    "watch:css": "tailwindcss -i ./src/tailwind.css -o ./public/styles.css --watch"
   },
   "devDependencies": {
-    "serve": "^14.2.4"
+    "serve": "^14.2.4",
+    "tailwindcss": "^3.4.17"
   }
 }
