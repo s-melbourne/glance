@@ -75,6 +75,10 @@
     #demo-banner.is-visible { display: flex; }
     #query-modal.is-open { display: flex; }
     #query-modal { display: none; }
+    #settings-panel { display: none; }
+    #settings-panel.is-open { display: block; }
+    #settings-backdrop { display: none; }
+    #settings-backdrop.is-open { display: block; }
   </style>
 </head>
 <body class="bg-white text-zinc-900 antialiased">
@@ -144,16 +148,34 @@
           </button>
         </div>
       </div>
-      <div class="flex flex-col items-center gap-3">
-        <button type="button" id="btn-sync" class="touch-target p-3 rounded-2xl text-zinc-400 hover:text-zinc-800 transition-colors relative" aria-label="Refresh calendar" title="Refresh">
-          <svg id="btn-sync-icon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      <div class="relative flex flex-col items-center">
+        <button type="button" id="btn-settings" class="touch-target p-3 rounded-2xl text-zinc-400 hover:text-zinc-800 hover:bg-white/60 transition-colors" aria-label="Settings" aria-haspopup="true" aria-controls="settings-panel" aria-expanded="false" title="Settings">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </button>
-        <span id="status-dot" class="w-2 h-2 rounded-full bg-emerald-400 status-pulse" title="Operational"></span>
-        <button type="button" id="btn-logout" class="touch-target p-2 rounded-xl text-zinc-400 hover:text-zinc-800 transition-colors" aria-label="Sign out" title="Sign out">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-        </button>
+        <div id="settings-panel" class="fixed left-4 right-4 bottom-24 sm:absolute sm:left-full sm:right-auto sm:bottom-0 sm:ml-3 sm:mb-0 sm:w-72 w-auto rounded-2xl border border-zinc-200/80 bg-white shadow-xl shadow-zinc-900/10 p-4 z-[60]" role="dialog" aria-label="Settings">
+          <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400 mb-3">Settings</p>
+          <div class="flex items-start gap-2.5 mb-3 pb-3 border-b border-zinc-100">
+            <span id="status-dot" class="w-2 h-2 rounded-full bg-emerald-400 status-pulse shrink-0 mt-1.5" title="Sync status"></span>
+            <div class="min-w-0 flex-1">
+              <p id="last-updated" class="text-[12px] font-medium text-zinc-600 leading-snug">Last updated —</p>
+              <p id="auth-user-label" class="text-[11px] text-zinc-400 mt-1 truncate" title=""></p>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <button type="button" id="btn-sync" class="touch-target flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[13px] font-medium text-zinc-700 hover:bg-zinc-50 transition-colors text-left" aria-label="Refresh calendar">
+              <svg id="btn-sync-icon" class="w-4 h-4 shrink-0 text-zinc-500" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              Refresh calendar
+            </button>
+            <button type="button" id="btn-logout" class="touch-target flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[13px] font-medium text-zinc-700 hover:bg-zinc-50 transition-colors text-left" aria-label="Sign out">
+              <svg class="w-4 h-4 shrink-0 text-zinc-500" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+              Sign out
+            </button>
+          </div>
+        </div>
       </div>
     </nav>
+
+    <div id="settings-backdrop" class="fixed inset-0 z-[55] bg-zinc-900/20 backdrop-blur-[1px] sm:hidden" aria-hidden="true"></div>
 
     <!-- Family filter column -->
     <aside id="family-rail" class="hidden sm:flex w-14 shrink-0 flex-col items-center gap-3 py-8 border-r border-zinc-100 bg-white" aria-label="Family filters"></aside>
@@ -173,8 +195,6 @@
         </button>
         <div id="ios-clock-wrapper" class="shrink-0 flex flex-col items-end pl-2">
           <div id="ios-clock" class="text-5xl md:text-6xl font-light tracking-tight text-zinc-400/90 tabular-nums antialiased selection:bg-transparent leading-none select-none" aria-live="polite">00<span class="clock-colon mx-0.5">:</span>00</div>
-          <p id="last-updated" class="text-[11px] font-medium text-zinc-400 tracking-wide mt-2">Last updated —</p>
-          <p id="auth-user-label" class="text-[10px] text-zinc-400 mt-1 max-w-[12rem] truncate hidden sm:block" title=""></p>
         </div>
       </header>
 
@@ -216,7 +236,10 @@
         <button type="button" data-nav="month" class="nav-btn-mobile touch-target p-3 rounded-2xl text-zinc-400" aria-label="Month">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         </button>
-        <button type="button" id="btn-sync-mobile" class="touch-target p-3 rounded-2xl text-zinc-400" aria-label="Refresh">
+        <button type="button" id="btn-settings-mobile" class="touch-target p-3 rounded-2xl text-zinc-400" aria-label="Settings" aria-haspopup="true" aria-controls="settings-panel">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </button>
+        <button type="button" id="btn-sync-mobile" class="hidden touch-target p-3 rounded-2xl text-zinc-400" aria-label="Refresh">
           <svg id="btn-sync-mobile-icon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         </button>
       </nav>
@@ -348,6 +371,7 @@
       if (firebaseAuth) await firebaseAuth.signOut();
       appBootstrapped = false;
       if (syncTimer) clearInterval(syncTimer);
+      closeSettingsPanel();
       showLoginScreen();
     }
 
@@ -392,8 +416,27 @@
       if (label && user?.userDetails) {
         label.textContent = user.userDetails;
         label.title = user.userDetails;
-        label.classList.remove('hidden');
       }
+    }
+
+    function openSettingsPanel() {
+      document.getElementById('settings-panel')?.classList.add('is-open');
+      document.getElementById('settings-backdrop')?.classList.add('is-open');
+      document.getElementById('btn-settings')?.setAttribute('aria-expanded', 'true');
+      document.getElementById('btn-settings-mobile')?.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeSettingsPanel() {
+      document.getElementById('settings-panel')?.classList.remove('is-open');
+      document.getElementById('settings-backdrop')?.classList.remove('is-open');
+      document.getElementById('btn-settings')?.setAttribute('aria-expanded', 'false');
+      document.getElementById('btn-settings-mobile')?.setAttribute('aria-expanded', 'false');
+    }
+
+    function toggleSettingsPanel() {
+      const panel = document.getElementById('settings-panel');
+      if (panel?.classList.contains('is-open')) closeSettingsPanel();
+      else openSettingsPanel();
     }
 
     function setDemoBanner(visible) {
@@ -1102,8 +1145,28 @@
         });
       });
 
-      document.getElementById('btn-sync').addEventListener('click', fetchCalendarData);
-      document.getElementById('btn-sync-mobile').addEventListener('click', fetchCalendarData);
+      document.getElementById('btn-sync')?.addEventListener('click', fetchCalendarData);
+      document.getElementById('btn-sync-mobile')?.addEventListener('click', fetchCalendarData);
+      document.getElementById('btn-settings')?.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleSettingsPanel();
+      });
+      document.getElementById('btn-settings-mobile')?.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleSettingsPanel();
+      });
+      document.getElementById('settings-backdrop')?.addEventListener('click', closeSettingsPanel);
+      document.addEventListener('click', e => {
+        const panel = document.getElementById('settings-panel');
+        const settingsBtn = document.getElementById('btn-settings');
+        if (!panel?.classList.contains('is-open')) return;
+        if (panel.contains(e.target) || settingsBtn?.contains(e.target)) return;
+        if (document.getElementById('btn-settings-mobile')?.contains(e.target)) return;
+        closeSettingsPanel();
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeSettingsPanel();
+      });
       document.getElementById('btn-month-header').addEventListener('click', () => {
         if (state.view !== 'week') return;
         state.selectedMonth = state.selectedDate.getMonth();
