@@ -18,3 +18,6 @@ api/obj/
 # Logs
 *.log
 npm-debug.log*
+
+# Firebase
+firebase-hosting/

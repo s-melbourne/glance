@@ -10,6 +10,7 @@
   <meta name="theme-color" content="#FFFFFF">
   <meta name="format-detection" content="telephone=no">
   <title>Glance</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/styles.css">
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -1119,21 +1120,30 @@
       document.getElementById('btn-login-demo')?.addEventListener('click', enterDemoMode);
 
       await initFirebaseAuth();
-      if (firebaseReady) {
-        try {
-          const redirectResult = await firebaseAuth.getRedirectResult();
-          if (redirectResult?.user) bootstrapApp(redirectResult.user);
-        } catch (err) {
-          showLoginError(err.message || 'Sign-in redirect failed.');
-        }
-        firebaseAuth.onAuthStateChanged(user => {
-          if (user) bootstrapApp(user);
-          else showLoginScreen();
-        });
+      if (!firebaseReady) {
+        showLoginScreen();
         return;
       }
 
-      showLoginScreen();
+      try {
+        await firebaseAuth.getRedirectResult();
+      } catch (err) {
+        showLoginError(err.message || 'Sign-in redirect failed.');
+      }
+
+      await new Promise(resolve => {
+        const unsub = firebaseAuth.onAuthStateChanged(user => {
+          unsub();
+          if (user) bootstrapApp(user);
+          else showLoginScreen();
+          resolve();
+        });
+      });
+
+      firebaseAuth.onAuthStateChanged(user => {
+        if (user) bootstrapApp(user);
+        else if (appBootstrapped) showLoginScreen();
+      });
     }
 
     document.addEventListener('DOMContentLoaded', () => { init(); });
