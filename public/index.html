@@ -285,6 +285,7 @@
     let firebaseAuth = null;
     let firebaseReady = false;
     let appBootstrapped = false;
+    let bootstrappedUid = null;
     let uiListenersBound = false;
     const eventRsvp = {};
 
@@ -375,12 +376,19 @@
     async function signOutUser() {
       if (firebaseAuth) await firebaseAuth.signOut();
       appBootstrapped = false;
+      bootstrappedUid = null;
       if (syncTimer) clearInterval(syncTimer);
       closeSettingsPanel();
       showLoginScreen();
     }
 
     function bootstrapApp(user) {
+      if (bootstrappedUid === user.uid && appBootstrapped) {
+        fetchCalendarData(user);
+        return;
+      }
+      bootstrappedUid = user.uid;
+
       showApp({
         userDetails: user.email || user.displayName || 'Signed in',
         userId: user.uid,
@@ -391,14 +399,11 @@
         bindUiListeners();
         startClock();
         scheduleMidnightRollover();
+        startSyncLoop();
       }
       showView('week');
-      fetchCalendarData(user).then(result => {
-        if (events.length === 0 && !result?.fromCache && !result?.authRequired && result?.configured !== false) {
-          loadDemoEvents();
-        }
-      });
-      startSyncLoop();
+      setDemoBanner(false);
+      fetchCalendarData(user);
     }
 
     function enterDemoMode() {
@@ -704,7 +709,7 @@
     }
 
     async function fetchCalendarData(authUserOverride) {
-      if (isSyncing) return null;
+      if (isSyncing) return { skipped: true };
       const dot = document.getElementById('status-dot');
       const setDot = color => {
         if (dot) dot.className = `w-2 h-2 rounded-full ${color} status-pulse`;
@@ -802,9 +807,8 @@
     }
 
     function startSyncLoop() {
-      fetchCalendarData();
       if (syncTimer) clearInterval(syncTimer);
-      syncTimer = setInterval(fetchCalendarData, SYNC_INTERVAL_MS);
+      syncTimer = setInterval(() => fetchCalendarData(), SYNC_INTERVAL_MS);
     }
 
     function scheduleMidnightRollover() {
