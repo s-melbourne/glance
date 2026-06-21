@@ -43,9 +43,25 @@ function stripUserPrefix(summary) {
   return s.replace(/^[-:,\s]+/, '').trim() || summary;
 }
 
-// ─── Helper: convert ICAL.Time to JS Date, handling floating times ───────────
+// ─── Helper: convert ICAL.Time to JS Date (all-day = local calendar date) ───
 function icalTimeToDate(icalTime) {
+  if (icalTime.isDate) {
+    return new Date(icalTime.year, icalTime.month - 1, icalTime.day);
+  }
   return icalTime.toJSDate();
+}
+
+function syncWindowBounds() {
+  const windowStart = new Date();
+  windowStart.setHours(0, 0, 0, 0);
+  const windowEnd = new Date(windowStart);
+  windowEnd.setDate(windowEnd.getDate() + 60);
+  return { windowStart, windowEnd };
+}
+
+function eventOverlapsWindow(start, end, windowStart, windowEnd) {
+  const eventEnd = end || start;
+  return eventEnd >= windowStart && start <= windowEnd;
 }
 
 // ─── Parse raw .ics text into structured event objects ───────────────────────
@@ -60,18 +76,13 @@ function parseICalEvents(icsText) {
   const comp = new ICAL.Component(jcal);
   const vevents = comp.getAllSubcomponents('vevent');
   const events = [];
+  const { windowStart, windowEnd } = syncWindowBounds();
 
   for (const vevent of vevents) {
     const event = new ICAL.Event(vevent);
     const rawSummary = (event.summary || 'Untitled').trim();
     const userId = matchUser(rawSummary);
     const label = stripUserPrefix(rawSummary);
-
-    // Expand recurring events within a 60-day window
-    const windowStart = new Date();
-    windowStart.setHours(0, 0, 0, 0);
-    const windowEnd = new Date(windowStart);
-    windowEnd.setDate(windowEnd.getDate() + 60);
 
     if (event.isRecurring()) {
       try {
@@ -112,20 +123,24 @@ function parseICalEvents(icsText) {
         last.setHours(0, 0, 0, 0);
         let idx = 0;
         while (cursor < last) {
-          const next = new Date(cursor);
-          next.setDate(next.getDate() + 1);
-          events.push({
-            id: `${event.uid}-allday-${idx++}`,
-            summary: rawSummary,
-            label,
-            userId,
-            start: cursor.toISOString(),
-            end: next.toISOString(),
-            allDay: true,
-          });
-          cursor = next;
+          if (cursor >= windowStart && cursor <= windowEnd) {
+            const next = new Date(cursor);
+            next.setDate(next.getDate() + 1);
+            events.push({
+              id: `${event.uid}-allday-${idx++}`,
+              summary: rawSummary,
+              label,
+              userId,
+              start: cursor.toISOString(),
+              end: next.toISOString(),
+              allDay: true,
+            });
+          }
+          const nextDay = new Date(cursor);
+          nextDay.setDate(nextDay.getDate() + 1);
+          cursor = nextDay;
         }
-      } else {
+      } else if (eventOverlapsWindow(start, end, windowStart, windowEnd)) {
         events.push({
           id: event.uid || `event-${Date.now()}`,
           summary: rawSummary,
@@ -221,7 +236,7 @@ app.http('calendar', {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=300', // 5-minute CDN cache
+        'Cache-Control': 'private, no-cache, no-store',
       },
       body: JSON.stringify({ events, fetchedAt: new Date().toISOString() }),
     };

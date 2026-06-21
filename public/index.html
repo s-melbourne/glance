@@ -718,7 +718,7 @@
       setSyncLoading(true);
       try {
         const headers = await getAuthHeaders(authUserOverride);
-        const response = await fetch(`${API_BASE}/calendar`, { headers });
+        const response = await fetch(`${API_BASE}/calendar`, { headers, cache: 'no-store' });
         if (response.status === 401 || response.status === 403) {
           let detail = null;
           try { detail = await response.json(); } catch { /* ignore */ }
