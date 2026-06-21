@@ -574,18 +574,40 @@
       return null;
     }
 
+    function parseApiDateTime(value, allDay) {
+      if (!value) return new Date();
+      const datePart = String(value).split('T')[0];
+      if (allDay || /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const [y, m, d] = datePart.split('-').map(Number);
+        return new Date(y, m - 1, d);
+      }
+      // Wall-clock values from the API (no Z / offset) — parse as local time.
+      if (!/[zZ]|[+-]\d{2}:\d{2}$/.test(value)) {
+        const [dateStr, timeStr = '00:00:00'] = value.split('T');
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const [hh, mm, ss = 0] = timeStr.split(':').map(Number);
+        return new Date(y, m - 1, d, hh, mm, ss);
+      }
+      return new Date(value);
+    }
+
+    function formatLocalDateTime(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+    }
+
     function normalizeApiEvents(rawEvents) {
       return (rawEvents || []).map(e => {
         const user = e.userId
           ? USERS.find(u => u.id === e.userId) || null
           : matchUser(e.summary);
+        const allDay = !!e.allDay;
         return {
           id: e.id,
           summary: e.summary || 'Untitled',
-          start: new Date(e.start),
-          end: new Date(e.end),
+          start: parseApiDateTime(e.start, allDay),
+          end: parseApiDateTime(e.end, allDay),
           user,
-          allDay: !!e.allDay,
+          allDay,
         };
       });
     }
@@ -596,8 +618,8 @@
           events: eventList.map(e => ({
             id: e.id,
             summary: e.summary,
-            start: e.start.toISOString(),
-            end: e.end.toISOString(),
+            start: e.allDay ? dateKey(e.start) : formatLocalDateTime(e.start),
+            end: e.allDay ? dateKey(e.end) : formatLocalDateTime(e.end),
             userId: e.user?.id || null,
             allDay: e.allDay,
           })),

@@ -43,15 +43,52 @@ function stripUserPrefix(summary) {
   return s.replace(/^[-:,\s]+/, '').trim() || summary;
 }
 
-// ─── Helper: convert ICAL.Time to JS Date (all-day = local calendar date) ───
+function pad2(n) {
+  return String(n).padStart(2, '0');
+}
+
+function isFloatingIcalTime(icalTime) {
+  if (icalTime.isDate) return false;
+  const tzid = icalTime.zone?.tzid;
+  return !tzid || tzid === 'floating';
+}
+
+// Serialize for the browser: all-day and floating times keep wall-clock values (no UTC Z suffix).
+function icalTimeToApiString(icalTime) {
+  if (icalTime.isDate) {
+    return `${icalTime.year}-${pad2(icalTime.month)}-${pad2(icalTime.day)}`;
+  }
+  if (isFloatingIcalTime(icalTime)) {
+    return `${icalTime.year}-${pad2(icalTime.month)}-${pad2(icalTime.day)}T${pad2(icalTime.hour)}:${pad2(icalTime.minute)}:${pad2(icalTime.second)}`;
+  }
+  return icalTime.toJSDate().toISOString();
+}
+
+// ─── Helper: convert ICAL.Time to JS Date for server-side window checks ───────
 function icalTimeToDate(icalTime) {
   if (icalTime.isDate) {
     return new Date(icalTime.year, icalTime.month - 1, icalTime.day);
   }
+  if (isFloatingIcalTime(icalTime)) {
+    return new Date(
+      icalTime.year,
+      icalTime.month - 1,
+      icalTime.day,
+      icalTime.hour,
+      icalTime.minute,
+      icalTime.second
+    );
+  }
   return icalTime.toJSDate();
 }
 
-function syncWindowBounds() {
+function dateToApiDate(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function dateToApiDateTime(d) {
+  return `${dateToApiDate(d)}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+}
   const windowStart = new Date();
   windowStart.setHours(0, 0, 0, 0);
   const windowEnd = new Date(windowStart);
@@ -101,8 +138,8 @@ function parseICalEvents(icsText) {
             summary: rawSummary,
             label,
             userId,
-            start: start.toISOString(),
-            end: end.toISOString(),
+            start: icalTimeToApiString(next),
+            end: icalTimeToApiString(detail.endDate),
             allDay: next.isDate,
           });
         }
@@ -131,8 +168,8 @@ function parseICalEvents(icsText) {
               summary: rawSummary,
               label,
               userId,
-              start: cursor.toISOString(),
-              end: next.toISOString(),
+              start: dateToApiDate(cursor),
+              end: dateToApiDate(next),
               allDay: true,
             });
           }
@@ -146,8 +183,10 @@ function parseICalEvents(icsText) {
           summary: rawSummary,
           label,
           userId,
-          start: start.toISOString(),
-          end: end.toISOString(),
+          start: icalTimeToApiString(event.startDate),
+          end: event.endDate
+            ? icalTimeToApiString(event.endDate)
+            : dateToApiDateTime(new Date(start.getTime() + 3_600_000)),
           allDay: false,
         });
       }
