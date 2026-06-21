@@ -314,7 +314,9 @@
     }
 
     async function getAuthHeaders(user) {
-      const activeUser = user || firebaseAuth?.currentUser;
+      // Click handlers pass a DOM event as the first arg — only treat real Firebase users as overrides.
+      const override = user && typeof user.getIdToken === 'function' ? user : null;
+      const activeUser = override || firebaseAuth?.currentUser;
       if (!activeUser) return {};
       const token = await activeUser.getIdToken(true);
       // SWA overwrites Authorization on /api/* — use a custom header (see api/shared/auth.js).
@@ -1155,8 +1157,8 @@
         });
       });
 
-      document.getElementById('btn-sync')?.addEventListener('click', fetchCalendarData);
-      document.getElementById('btn-sync-mobile')?.addEventListener('click', fetchCalendarData);
+      document.getElementById('btn-sync')?.addEventListener('click', () => fetchCalendarData());
+      document.getElementById('btn-sync-mobile')?.addEventListener('click', () => fetchCalendarData());
       document.getElementById('btn-settings')?.addEventListener('click', e => {
         e.stopPropagation();
         toggleSettingsPanel();
