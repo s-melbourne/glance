@@ -276,6 +276,7 @@
     };
 
     let syncTimer = null;
+    let clockTimer = null;
     let midnightTimer = null;
     let isDemoMode = false;
     let isSyncing = false;
@@ -284,6 +285,7 @@
     let firebaseAuth = null;
     let firebaseReady = false;
     let appBootstrapped = false;
+    let uiListenersBound = false;
     const eventRsvp = {};
 
     function escapeAttr(str) {
@@ -381,10 +383,13 @@
         userDetails: user.email || user.displayName || 'Signed in',
         userId: user.uid,
       });
-      if (appBootstrapped) return;
-      appBootstrapped = true;
-      initEventListeners();
-      startClock();
+      closeSettingsPanel();
+      if (!appBootstrapped) {
+        appBootstrapped = true;
+        bindUiListeners();
+        startClock();
+        scheduleMidnightRollover();
+      }
       showView('week');
       fetchCalendarData(user).then(result => {
         if (events.length === 0 && !result?.fromCache && !result?.authRequired && result?.configured !== false) {
@@ -392,13 +397,13 @@
         }
       });
       startSyncLoop();
-      scheduleMidnightRollover();
     }
 
     function enterDemoMode() {
       appBootstrapped = true;
-      initEventListeners();
+      bindUiListeners();
       startClock();
+      closeSettingsPanel();
       showApp({ userDetails: 'Demo mode', userId: 'demo' });
       showView('week');
       loadDemoEvents();
@@ -729,7 +734,7 @@
             setDot('bg-red-400');
             return { authRequired: true, detail };
           }
-          updateLastSynced(null, 'Calendar not configured');
+          updateLastSynced(null, 'Calendar not configured — set ICLOUD_CALENDAR_URL in Azure');
           setDot('bg-amber-400');
           showCalendarSetupNotice(true);
           renderCurrentView();
@@ -782,6 +787,7 @@
     }
 
     function startClock() {
+      if (clockTimer) return;
       const clockEl = document.getElementById('ios-clock');
       function update() {
         const now = new Date();
@@ -790,7 +796,7 @@
         clockEl.innerHTML = `${hours}<span class="clock-colon mx-0.5">:</span>${minutes}`;
       }
       update();
-      setInterval(update, 1000);
+      clockTimer = setInterval(update, 1000);
     }
 
     function startSyncLoop() {
@@ -1119,7 +1125,10 @@
       }
     }
 
-    function initEventListeners() {
+    function bindUiListeners() {
+      if (uiListenersBound) return;
+      uiListenersBound = true;
+
       document.getElementById('app-shell')?.addEventListener('click', handleEventActionClick);
       document.getElementById('system-hub-dot')?.addEventListener('click', resetDashboard);
       document.getElementById('query-modal-cancel')?.addEventListener('click', closeQueryModal);
