@@ -2,10 +2,6 @@
   "$schema": "https://json.schemastore.org/staticwebapp.config.json",
   "routes": [
     {
-      "route": "/__/firebase/init.json",
-      "rewrite": "/api/firebase-init"
-    },
-    {
       "route": "/",
       "rewrite": "/index.html",
       "allowedRoles": ["anonymous"]
@@ -19,7 +15,6 @@
     "rewrite": "/index.html",
     "exclude": [
       "/api/*",
-      "/__/*",
       "*.js",
       "*.mjs",
       "*.css",

@@ -7,7 +7,6 @@
 'use strict';
 
 const { app } = require('@azure/functions');
-const { getPublicAuthDomain } = require('../shared/firebase-public');
 
 app.http('config', {
   methods: ['GET'],
@@ -15,7 +14,7 @@ app.http('config', {
   route: 'config',
   handler: async () => {
     const apiKey = process.env.FIREBASE_API_KEY;
-    const authDomain = getPublicAuthDomain();
+    const authDomain = process.env.FIREBASE_AUTH_DOMAIN;
     const projectId = process.env.FIREBASE_PROJECT_ID;
     const appId = process.env.FIREBASE_APP_ID;
 

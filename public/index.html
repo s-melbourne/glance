@@ -323,9 +323,10 @@
       showLoginError('');
       try {
         const provider = new firebase.auth.GoogleAuthProvider();
-        // Redirect avoids Cross-Origin-Opener-Policy popup issues on Azure SWA.
-        await firebaseAuth.signInWithRedirect(provider);
+        // Popup keeps auth on the SWA origin (redirect + self-hosted /__/auth broke on Azure MIME).
+        await firebaseAuth.signInWithPopup(provider);
       } catch (err) {
+        if (err.code === 'auth/popup-closed-by-user') return;
         showLoginError(err.message || 'Google sign-in failed.');
       }
     }
