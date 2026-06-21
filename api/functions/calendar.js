@@ -89,6 +89,8 @@ function dateToApiDate(d) {
 function dateToApiDateTime(d) {
   return `${dateToApiDate(d)}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 }
+
+function syncWindowBounds() {
   const windowStart = new Date();
   windowStart.setHours(0, 0, 0, 0);
   const windowEnd = new Date(windowStart);
