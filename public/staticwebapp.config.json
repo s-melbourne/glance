@@ -24,7 +24,9 @@
       "*.jpg",
       "*.webp",
       "*.woff",
-      "*.woff2"
+      "*.woff2",
+      "/manifest.webmanifest",
+      "/sw.js"
     ]
   },
   "globalHeaders": {
@@ -38,7 +40,8 @@
   },
   "mimeTypes": {
     ".json": "application/json",
-    ".mjs": "text/javascript"
+    ".mjs": "text/javascript",
+    ".webmanifest": "application/manifest+json"
   },
   "platform": {
     "apiRuntime": "node:20"

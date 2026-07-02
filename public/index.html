@@ -7,10 +7,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Glance">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#FFFFFF">
+  <meta name="description" content="Family calendar, chores, and household lists.">
+  <meta name="theme-color" content="#27272a">
   <meta name="format-detection" content="telephone=no">
   <title>Glance</title>
+  <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="/styles.css">
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -1301,7 +1304,17 @@
       });
     }
 
-    document.addEventListener('DOMContentLoaded', () => { init(); });
+    function registerServiceWorker() {
+      if (!('serviceWorker' in navigator)) return;
+      navigator.serviceWorker.register('/sw.js').catch(err => {
+        console.warn('Service worker registration failed:', err);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      registerServiceWorker();
+      init();
+    });
   </script>
 </body>
 </html>
