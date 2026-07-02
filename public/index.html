@@ -351,30 +351,65 @@
       }
     }
 
-    async function signInWithGoogle() {
-      if (!firebaseReady) return;
+    let signInInProgress = false;
+
+    function prefersRedirectAuth() {
+      const ua = navigator.userAgent || '';
+      const isIOS = /iPad|iPhone|iPod/.test(ua)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (isIOS) return true;
+      return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+    }
+
+    function setLoginButtonsDisabled(disabled) {
+      ['btn-login-google', 'btn-login-apple', 'btn-login-demo'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        if (disabled) btn.setAttribute('disabled', 'disabled');
+        else btn.removeAttribute('disabled');
+      });
+    }
+
+    function isBenignAuthError(err) {
+      return err?.code === 'auth/popup-closed-by-user'
+        || err?.code === 'auth/cancelled-popup-request';
+    }
+
+    async function signInWithProvider(provider) {
+      if (!firebaseReady || signInInProgress) return;
       showLoginError('');
+      signInInProgress = true;
+      setLoginButtonsDisabled(true);
+
       try {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        // Popup keeps auth on the SWA origin (redirect + self-hosted /__/auth broke on Azure MIME).
+        if (prefersRedirectAuth()) {
+          await firebaseAuth.signInWithRedirect(provider);
+          return;
+        }
         await firebaseAuth.signInWithPopup(provider);
       } catch (err) {
-        if (err.code === 'auth/popup-closed-by-user') return;
-        showLoginError(err.message || 'Google sign-in failed.');
+        if (!isBenignAuthError(err)) {
+          showLoginError(err.message || 'Sign-in failed.');
+        }
+      } finally {
+        if (!prefersRedirectAuth()) {
+          signInInProgress = false;
+          setLoginButtonsDisabled(false);
+        }
       }
     }
 
+    async function signInWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await signInWithProvider(provider);
+    }
+
     async function signInWithApple() {
-      if (!firebaseReady) return;
-      showLoginError('');
-      try {
-        const provider = new firebase.auth.OAuthProvider('apple.com');
-        provider.addScope('email');
-        provider.addScope('name');
-        await firebaseAuth.signInWithPopup(provider);
-      } catch (err) {
-        showLoginError(err.message || 'Apple sign-in failed.');
-      }
+      const provider = new firebase.auth.OAuthProvider('apple.com');
+      provider.addScope('email');
+      provider.addScope('name');
+      await signInWithProvider(provider);
     }
 
     async function signOutUser() {
@@ -1284,9 +1319,15 @@
       }
 
       try {
-        await firebaseAuth.getRedirectResult();
+        const result = await firebaseAuth.getRedirectResult();
+        if (result?.user) bootstrapApp(result.user);
       } catch (err) {
-        showLoginError(err.message || 'Sign-in redirect failed.');
+        if (!isBenignAuthError(err)) {
+          showLoginError(err.message || 'Sign-in redirect failed.');
+        }
+      } finally {
+        signInInProgress = false;
+        setLoginButtonsDisabled(false);
       }
 
       await new Promise(resolve => {
