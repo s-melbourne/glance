@@ -722,9 +722,13 @@
       const pad = compact
         ? (showActions ? 'p-3 pr-[5.5rem]' : 'p-3 pr-11')
         : (showActions ? 'p-5 pr-[6.5rem]' : 'p-5 pr-14');
+      const clickable = user
+        ? 'cursor-pointer hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] active:scale-[0.98] transition-all'
+        : '';
+      const userAttr = user ? ` data-event-user="${escapeAttr(user.id)}" role="button" tabindex="0"` : '';
 
       return `
-        <div class="${showActions ? 'group ' : ''}filter-fade ${dimmed} relative ${pad} rounded-2xl border border-zinc-100 border-l-4 ${u.ribbon} ${u.pastel} bg-opacity-40 shadow-[0_8px_32px_rgba(0,0,0,0.02)]">
+        <div class="${showActions ? 'group ' : ''}filter-fade ${dimmed} relative ${pad} rounded-2xl border border-zinc-100 border-l-4 ${u.ribbon} ${u.pastel} bg-opacity-40 shadow-[0_8px_32px_rgba(0,0,0,0.02)] ${clickable}"${userAttr}>
           <p class="text-[14px] font-bold text-zinc-900 tracking-tight leading-snug truncate">${escapeHtml(label)}</p>
           <p class="text-[11px] text-zinc-500 font-medium mt-1">${timeStr}</p>
           ${eventBadgeRowHTML(event, u, compact ? 'sm' : 'lg', showActions)}
@@ -949,6 +953,24 @@
       });
     }
 
+    function bindEventUserFilters(container) {
+      container.querySelectorAll('[data-event-user]').forEach(el => {
+        const apply = () => {
+          const id = el.dataset.eventUser;
+          if (!id) return;
+          state.filteredUser = id;
+          renderCurrentView();
+        };
+        el.addEventListener('click', apply);
+        el.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            apply();
+          }
+        });
+      });
+    }
+
     function clearFilters() {
       state.filteredUser = null;
       state.anchoredFromMonth = false;
@@ -1004,7 +1026,9 @@
           </div>`;
       }).join('');
 
-      bindDayLinks(document.getElementById('week-columns'));
+      const weekColumns = document.getElementById('week-columns');
+      bindDayLinks(weekColumns);
+      bindEventUserFilters(weekColumns);
     }
 
     function bindDayLinks(container) {
@@ -1043,13 +1067,20 @@
         const timeStr = e.allDay ? 'All day' : formatTimeReadable(e.start);
         const label = stripUserPrefix(e.summary);
 
+        const clickable = user
+          ? 'cursor-pointer hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] active:scale-[0.98] transition-all'
+          : '';
+        const userAttr = user ? ` data-event-user="${escapeAttr(user.id)}" role="button" tabindex="0"` : '';
+
         return `
-          <div class="group filter-fade rise-in ${dimmed} relative p-5 pr-[7rem] rounded-3xl border border-zinc-100 border-l-4 ${u.ribbon} ${u.pastel} bg-opacity-40 shadow-[0_8px_32px_rgba(0,0,0,0.02)]" style="animation-delay:${Math.min(i * 45, 270)}ms">
+          <div class="group filter-fade rise-in ${dimmed} relative p-5 pr-[7rem] rounded-3xl border border-zinc-100 border-l-4 ${u.ribbon} ${u.pastel} bg-opacity-40 shadow-[0_8px_32px_rgba(0,0,0,0.02)] ${clickable}" style="animation-delay:${Math.min(i * 45, 270)}ms"${userAttr}>
             <p class="text-[16px] font-bold text-zinc-900 tracking-tight leading-snug">${escapeHtml(label)}</p>
             <p class="text-[12px] text-zinc-500 font-medium mt-1.5">${timeStr}${user ? ` · ${user.name}` : ''}</p>
             ${eventBadgeRowHTML(e, u, 'lg')}
           </div>`;
       }).join('');
+
+      bindEventUserFilters(timeline);
     }
 
     function renderMonthView() {
